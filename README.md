@@ -27,9 +27,11 @@ aplikacji — patrz `tailwind.config.js`.
 
 ## Sekcje
 
-1. **Hero** — nagłówek + w połowie widoczne okno aplikacji (macOS chrome), pętla hot-reloadu w logu
-2. **CLI** — przyklejony ciemny terminal macOS; scroll przełącza scenki TUI (`/connect`, hot-reload, `/conflicts`, `/git`)
-3. **MCP** — mockowana rozmowa z agentem AI rozwiązującym konflikty przez narzędzia MCP
+Styl inspirowany linear.app: near-black (#08090a), Inter semibold z ciasnym trackingiem, minimum koloru.
+
+1. **Hero** — nagłówek po lewej, link „Nowość · MCP →", pełne okno aplikacji (ciemny wariant design systemu) na gradientowej „podłodze"
+2. **CLI** — sekcja 580vh: przyklejony viewport, scroll przesuwa poziomo 4 etapy TUI (`/connect`, hot-reload, `/conflicts`, `/git`), ~160vh scrolla na przejście
+3. **MCP** — interaktywny czat o stałej wysokości: agent znajduje 2 konflikty, analizuje różnice, użytkownik wybiera strategię (przyciski, auto-wybór po 6,5 s), agent robi merge + checkpoint
 
 ## Uruchomienie
 

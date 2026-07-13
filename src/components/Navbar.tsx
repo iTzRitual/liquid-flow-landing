@@ -17,13 +17,13 @@ export function Navbar() {
         </a>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          <a href="#demo" className="hidden rounded-md px-3 py-1.5 text-sm text-slate-300 transition-colors hover:text-white sm:block">
+          <a href="#demo" className="hidden rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink sm:block">
             {t.nav.features}
           </a>
-          <a href="#cli" className="hidden rounded-md px-3 py-1.5 text-sm text-slate-300 transition-colors hover:text-white sm:block">
+          <a href="#cli" className="hidden rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink sm:block">
             {t.nav.cli}
           </a>
-          <a href="#mcp" className="hidden rounded-md px-3 py-1.5 text-sm text-slate-300 transition-colors hover:text-white sm:block">
+          <a href="#mcp" className="hidden rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink sm:block">
             {t.nav.mcp}
           </a>
 
@@ -40,7 +40,7 @@ export function Navbar() {
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            className="ml-1 flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="ml-1 flex items-center gap-2 rounded-full bg-ink px-3.5 py-1.5 text-sm font-medium text-night-950 transition-colors hover:bg-white"
           >
             <Github className="h-4 w-4" aria-hidden="true" />
             {t.nav.github}

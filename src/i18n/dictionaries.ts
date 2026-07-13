@@ -8,14 +8,14 @@ const pl = {
       github: 'GitHub',
     },
     hero: {
-      badge: 'Open source · macOS / Windows / Linux',
-      title1: 'Szablony Comarch e-Sklep.',
-      title2: 'Edytuj lokalnie, zobacz natychmiast.',
+      title1: 'Synchronizacja szablonów',
+      title2: 'Comarch e-Sklep. Dla ludzi i agentów.',
       subtitle:
-        'Liquid Flow synchronizuje pliki szablonu Liquid między Twoim edytorem a sklepem w czasie rzeczywistym — z wykrywaniem konfliktów i kopią zapasową w Git. Otwarta odpowiedź na Comarch Liquid Sync, wreszcie także na macOS.',
+        'Hot-reload z edytora prosto do sklepu, konflikty pod kontrolą i kopia zapasowa w Git. Open source — na macOS, Windows i Linuksie.',
+      newLabel: 'Nowość',
+      newLink: 'Serwer MCP dla agentów AI',
       ctaPrimary: 'Pobierz z GitHub',
       ctaSecondary: 'Zobacz jak działa',
-      demoHint: 'To działająca aplikacja — klikaj zakładki i rozwiąż konflikt.',
     },
     demo: {
       shopsLabel: 'Sklepy',
@@ -71,10 +71,7 @@ const pl = {
       heading: 'Trzeci tryb: agent AI przez MCP',
       subtitle:
         'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i zrobi checkpoint w Git.',
-      userMessage:
-        'Sprawdź czy w sklepie Ogródek są jakieś konflikty i rozwiąż je — wersje lokalne są aktualne. Na koniec zrób checkpoint.',
-      final:
-        'Gotowe ✅ Znalazłem 2 konflikty. `header.liquid` i `theme.css` nadpisałem wersją lokalną (była nowsza), a checkpoint „resolve conflicts after header redesign" trafił na main.',
+      inputPlaceholder: 'Napisz do agenta…',
     },
     footer: {
       tagline: 'Open source, MIT. Zbudowane z frustracji, z miłości do macOS.',
@@ -93,14 +90,14 @@ const en: Dictionary = {
       github: 'GitHub',
     },
     hero: {
-      badge: 'Open source · macOS / Windows / Linux',
-      title1: 'Comarch e-Sklep templates.',
-      title2: 'Edit locally, see it instantly.',
+      title1: 'The template sync system',
+      title2: 'for Comarch e-Sklep. For people and agents.',
       subtitle:
-        'Liquid Flow syncs Liquid template files between your editor and your shop in real time — with conflict detection and Git backup. The open-source answer to Comarch Liquid Sync, finally on macOS too.',
+        'Hot-reload from your editor straight to the shop, conflicts under control and Git backup. Open source — on macOS, Windows and Linux.',
+      newLabel: 'New',
+      newLink: 'MCP server for AI agents',
       ctaPrimary: 'Get it on GitHub',
       ctaSecondary: 'See how it works',
-      demoHint: 'This is the real app — click the tabs and resolve a conflict.',
     },
     demo: {
       shopsLabel: 'Shops',
@@ -156,10 +153,7 @@ const en: Dictionary = {
       heading: 'A third mode: AI agents over MCP',
       subtitle:
         'Liquid Flow ships an MCP server so agents (Claude Code, Claude Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and create a Git checkpoint on its own.',
-      userMessage:
-        'Check the Ogródek shop for conflicts and resolve them — local versions are up to date. Make a checkpoint when done.',
-      final:
-        'Done ✅ Found 2 conflicts. I overwrote `header.liquid` and `theme.css` with the local versions (they were newer), and the checkpoint "resolve conflicts after header redesign" landed on main.',
+      inputPlaceholder: 'Tell the agent what to do…',
     },
     footer: {
       tagline: 'Open source, MIT. Built out of frustration, with love for macOS.',

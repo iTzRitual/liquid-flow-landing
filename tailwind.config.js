@@ -41,12 +41,17 @@ module.exports = {
         },
         // Landing-only palette (dark marketing surfaces, independent of --ds-*
         // so toggling the app demo's theme never restyles the page around it).
+        // Linear-inspired near-black neutrals: barely-blue grays, no navy cast.
         night: {
-          950: '#07090f',
-          900: '#0b0e17',
-          850: '#101423',
-          800: '#161b2e',
-          700: '#232a45',
+          950: '#08090a',
+          900: '#0e0f10',
+          850: '#131416',
+          800: '#1a1c1e',
+          700: '#27292c',
+        },
+        ink: {
+          DEFAULT: '#f7f8f8',
+          muted: '#8a8f98',
         },
         brand: {
           DEFAULT: '#3365ff',
