@@ -1,0 +1,35 @@
+/* Liquid Flow design tokens (vendored) — the embedded app demo styles itself
+ * entirely off these --ds-* variables, identical to the real application. */
+@import '../src/vendor/design-system/tokens/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  @apply bg-night-950 font-ui text-slate-200 antialiased;
+}
+
+::selection {
+  background: rgba(51, 101, 255, 0.4);
+}
+
+/* The DS WindowChrome renders Electron drag strips; on the web they are inert
+ * but must not swallow clicks aimed at the app content underneath. */
+.drag-region {
+  pointer-events: none !important;
+}

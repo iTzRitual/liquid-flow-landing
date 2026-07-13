@@ -1,0 +1,171 @@
+export type Lang = 'pl' | 'en';
+
+const pl = {
+    nav: {
+      features: 'Możliwości',
+      cli: 'CLI',
+      mcp: 'MCP',
+      github: 'GitHub',
+    },
+    hero: {
+      badge: 'Open source · macOS / Windows / Linux',
+      title1: 'Szablony Comarch e-Sklep.',
+      title2: 'Edytuj lokalnie, zobacz natychmiast.',
+      subtitle:
+        'Liquid Flow synchronizuje pliki szablonu Liquid między Twoim edytorem a sklepem w czasie rzeczywistym — z wykrywaniem konfliktów i kopią zapasową w Git. Otwarta odpowiedź na Comarch Liquid Sync, wreszcie także na macOS.',
+      ctaPrimary: 'Pobierz z GitHub',
+      ctaSecondary: 'Zobacz jak działa',
+      demoHint: 'To działająca aplikacja — klikaj zakładki i rozwiąż konflikt.',
+    },
+    demo: {
+      shopsLabel: 'Sklepy',
+      addShop: 'Dodaj sklep',
+      id: 'ID',
+      ok: 'Brak konfliktów',
+      openFolder: 'Otwórz folder',
+      openShop: 'Otwórz sklep',
+      refresh: 'Odśwież',
+      files: 'Pliki',
+      tabActivity: 'Aktywność',
+      tabConflicts: 'Konflikty',
+      tabGit: 'Git-Backup',
+      emptyLog: 'Brak aktywności',
+      conflictsTitle: 'Wykryte konflikty',
+      conflictsEmpty: 'Wszystkie konflikty rozwiązane ✨',
+      pull: 'Pobierz',
+      push: 'Nadpisz',
+      conflictLocal: 'lokalny nowszy',
+      conflictRemote: 'zmieniony w panelu',
+      conflictLocalMissing: 'brak lokalnie',
+      gitBranch: 'Gałąź',
+      gitAutoCommit: 'Auto-commit',
+      gitCheckpoint: 'Checkpoint',
+      gitPush: 'Push',
+      gitHistory: 'Historia',
+      gitCommitsAhead: (n: number) => `${n} commity przed main`,
+    },
+    cli: {
+      heading: 'Wolisz terminal? Jest i CLI.',
+      subtitle:
+        'Komenda `liquidflow` uruchamia pełny interfejs w terminalu — status sklepu, log na żywo i paleta slash-komend z autouzupełnianiem.',
+      steps: [
+        {
+          title: 'Połącz się jedną komendą',
+          body: '`/connect` łączy ze sklepem przez to samo API SOAP co oryginalny Liquid Sync. Sesja trwa, dopóki jej nie zamkniesz — Ctrl+C jest celowo ignorowany.',
+        },
+        {
+          title: 'Hot-reload prosto z edytora',
+          body: 'Zapisujesz plik — Liquid Flow natychmiast wysyła go do sklepu. Każde zdarzenie widzisz w logu na żywo.',
+        },
+        {
+          title: 'Konflikty pod kontrolą',
+          body: '`/conflicts` pokazuje różnice między wersją lokalną a panelem administracyjnym. Pobierz, nadpisz albo rozwiąż zbiorczo.',
+        },
+        {
+          title: 'Git jako siatka bezpieczeństwa',
+          body: '`/git` wersjonuje folder szablonu: auto-commit po każdej zmianie, checkpointy, historia i push na GitHub.',
+        },
+      ],
+    },
+    mcp: {
+      heading: 'Trzeci tryb: agent AI przez MCP',
+      subtitle:
+        'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i zrobi checkpoint w Git.',
+      userMessage:
+        'Sprawdź czy w sklepie Ogródek są jakieś konflikty i rozwiąż je — wersje lokalne są aktualne. Na koniec zrób checkpoint.',
+      final:
+        'Gotowe ✅ Znalazłem 2 konflikty. `header.liquid` i `theme.css` nadpisałem wersją lokalną (była nowsza), a checkpoint „resolve conflicts after header redesign" trafił na main.',
+    },
+    footer: {
+      tagline: 'Open source, MIT. Zbudowane z frustracji, z miłości do macOS.',
+      disclaimer:
+        'Liquid Flow to niezależny projekt open source. Nie jest powiązany z Comarch S.A. „Comarch" i „Comarch e-Sklep" są znakami towarowymi ich właścicieli.',
+    },
+};
+
+export type Dictionary = typeof pl;
+
+const en: Dictionary = {
+    nav: {
+      features: 'Features',
+      cli: 'CLI',
+      mcp: 'MCP',
+      github: 'GitHub',
+    },
+    hero: {
+      badge: 'Open source · macOS / Windows / Linux',
+      title1: 'Comarch e-Sklep templates.',
+      title2: 'Edit locally, see it instantly.',
+      subtitle:
+        'Liquid Flow syncs Liquid template files between your editor and your shop in real time — with conflict detection and Git backup. The open-source answer to Comarch Liquid Sync, finally on macOS too.',
+      ctaPrimary: 'Get it on GitHub',
+      ctaSecondary: 'See how it works',
+      demoHint: 'This is the real app — click the tabs and resolve a conflict.',
+    },
+    demo: {
+      shopsLabel: 'Shops',
+      addShop: 'Add shop',
+      id: 'ID',
+      ok: 'No conflicts',
+      openFolder: 'Open folder',
+      openShop: 'Open shop',
+      refresh: 'Refresh',
+      files: 'Files',
+      tabActivity: 'Activity',
+      tabConflicts: 'Conflicts',
+      tabGit: 'Git-Backup',
+      emptyLog: 'No activity',
+      conflictsTitle: 'Detected conflicts',
+      conflictsEmpty: 'All conflicts resolved ✨',
+      pull: 'Pull',
+      push: 'Overwrite',
+      conflictLocal: 'local is newer',
+      conflictRemote: 'changed in admin panel',
+      conflictLocalMissing: 'missing locally',
+      gitBranch: 'Branch',
+      gitAutoCommit: 'Auto-commit',
+      gitCheckpoint: 'Checkpoint',
+      gitPush: 'Push',
+      gitHistory: 'History',
+      gitCommitsAhead: (n: number) => `${n} commits ahead of main`,
+    },
+    cli: {
+      heading: 'Prefer the terminal? There is a CLI.',
+      subtitle:
+        'The `liquidflow` command opens a full terminal UI — shop status, live log and a slash-command palette with autocompletion.',
+      steps: [
+        {
+          title: 'Connect with one command',
+          body: '`/connect` talks to your shop over the same SOAP API as the original Liquid Sync. The session stays alive until you end it — Ctrl+C is ignored on purpose.',
+        },
+        {
+          title: 'Hot-reload straight from your editor',
+          body: 'Save a file — Liquid Flow pushes it to the shop instantly. Every event shows up in the live log.',
+        },
+        {
+          title: 'Conflicts under control',
+          body: '`/conflicts` shows what differs between your local copy and the admin panel. Pull, overwrite, or resolve in bulk.',
+        },
+        {
+          title: 'Git as a safety net',
+          body: '`/git` versions the template folder: auto-commit on every change, checkpoints, history and push to GitHub.',
+        },
+      ],
+    },
+    mcp: {
+      heading: 'A third mode: AI agents over MCP',
+      subtitle:
+        'Liquid Flow ships an MCP server so agents (Claude Code, Claude Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and create a Git checkpoint on its own.',
+      userMessage:
+        'Check the Ogródek shop for conflicts and resolve them — local versions are up to date. Make a checkpoint when done.',
+      final:
+        'Done ✅ Found 2 conflicts. I overwrote `header.liquid` and `theme.css` with the local versions (they were newer), and the checkpoint "resolve conflicts after header redesign" landed on main.',
+    },
+    footer: {
+      tagline: 'Open source, MIT. Built out of frustration, with love for macOS.',
+      disclaimer:
+        'Liquid Flow is an independent open-source project. It is not affiliated with Comarch S.A. "Comarch" and "Comarch e-Sklep" are trademarks of their respective owners.',
+    },
+};
+
+export const dictionaries: Record<Lang, Dictionary> = { pl, en };
