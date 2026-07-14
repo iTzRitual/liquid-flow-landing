@@ -108,7 +108,7 @@ export function Hero() {
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
-            className="dark relative rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
+            className="dark relative mx-auto max-w-[1080px] rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
           >
             <AppDemo />
           </motion.div>

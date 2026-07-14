@@ -83,7 +83,7 @@ export function CliSection() {
   if (reduceMotion) {
     // Reduced motion: a plain vertical stack, each stage as a static terminal.
     return (
-      <section id="cli" className="border-t border-white/5 bg-night-900">
+      <section id="cli" className="bg-night-900">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
           <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
           <div className="mt-16 flex flex-col gap-20">
@@ -103,7 +103,7 @@ export function CliSection() {
     <section
       id="cli"
       ref={sectionRef}
-      className="relative border-t border-white/5 bg-night-900"
+      className="relative bg-night-900"
       style={{ height: `${n * VH_PER_STAGE + 100}vh` }}
     >
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
