@@ -198,13 +198,18 @@ function Header({ lang }: { lang: Lang }) {
   );
 }
 
+/* The log fills the space above the input/overlay. The lines live in a
+ * bottom-anchored absolute container inside an overflow-hidden parent: when the
+ * area shrinks (palette/overlay opening) the oldest lines are clipped at the
+ * top — like a real terminal — instead of the flex layout squashing them. */
 function LogPane({ lines, dim, animateFrom }: { lines: LogLine[]; dim: boolean; animateFrom: number }) {
   return (
     <div
-      className={`flex min-h-0 flex-1 flex-col justify-end overflow-hidden px-1 transition-opacity duration-300 ${
+      className={`relative min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ${
         dim ? 'opacity-45' : 'opacity-100'
       }`}
     >
+      <div className="absolute inset-x-0 bottom-0 px-1">
       {lines.map((l, i) => (
         <motion.div
           key={i}
@@ -217,6 +222,7 @@ function LogPane({ lines, dim, animateFrom }: { lines: LogLine[]; dim: boolean; 
           {l.ts} {l.text}
         </motion.div>
       ))}
+      </div>
     </div>
   );
 }
