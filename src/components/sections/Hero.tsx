@@ -91,19 +91,22 @@ export function Hero() {
           }}
         />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20">
-          {/* Soft light glow cast beneath the render onto the floor. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 opacity-70 mix-blend-screen"
-            style={{
-              backgroundImage: 'url(/hero/app-shadow.png)',
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '100% 100%',
-            }}
-          />
+        {/* Soft light glow cast beneath the render onto the floor. The image is
+            opaque (flat grey with a white glow), so it must span the full floor
+            width — clipped to a narrower column it screen-lightens only the
+            centre and leaves visible seams on wide viewports. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 opacity-70 mix-blend-screen"
+          style={{
+            backgroundImage: 'url(/hero/app-shadow.png)',
+            backgroundPosition: 'center bottom',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: '100% 100%',
+          }}
+        />
 
+        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20">
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
