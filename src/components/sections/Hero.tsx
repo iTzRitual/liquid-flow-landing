@@ -68,26 +68,51 @@ export function Hero() {
       </div>
 
       {/* The real app — fully visible, floating on a soft light floor with
-          breathing room below, like Linear's hero. */}
-      <div id="demo" className="relative mx-auto mt-16 max-w-6xl px-4 pb-24 sm:mt-20 sm:px-6 sm:pb-32">
-        {/* Gradient floor: a wide, soft glow behind and beneath the window that
-            fades out before the next section. */}
+          breathing room below, like Linear's hero. The outer shell starts at
+          the page's own near-black (invisible seam at the top) and eases
+          into a mid-grey floor toward the bottom, matching Linear's own
+          hero container. */}
+      <div
+        id="demo"
+        className="relative mx-4 mt-16 overflow-hidden rounded-3xl sm:mx-8 sm:mt-20 lg:mx-12"
+        style={{
+          background:
+            'radial-gradient(52.53% 57.5% at 50% 100%, rgba(8, 9, 10, 0) 0%, rgba(8, 9, 10, 0.5) 100%), linear-gradient(180deg, #08090a 10%, #8a8f98 100%)',
+        }}
+      >
+        {/* Noise texture over the gradient, matching Linear's subtle film grain. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -inset-x-16 top-12 bottom-0"
+          className="pointer-events-none absolute inset-0 opacity-[0.08] mix-blend-overlay"
           style={{
-            background:
-              'radial-gradient(75% 85% at 50% 55%, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.05) 50%, transparent 76%)',
+            backgroundImage: 'url(/hero/noise.png)',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '480px',
           }}
         />
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
-          className="dark relative rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
-        >
-          <AppDemo />
-        </motion.div>
+
+        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20">
+          {/* Soft light glow cast beneath the render onto the floor. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 opacity-70 mix-blend-screen"
+            style={{
+              backgroundImage: 'url(/hero/app-shadow.png)',
+              backgroundPosition: 'center bottom',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '100% 100%',
+            }}
+          />
+
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
+            className="dark relative rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
+          >
+            <AppDemo />
+          </motion.div>
+        </div>
       </div>
     </section>
   );
