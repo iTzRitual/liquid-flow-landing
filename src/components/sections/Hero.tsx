@@ -77,7 +77,11 @@ export function Hero() {
         className="relative mx-4 mt-16 overflow-hidden rounded-3xl sm:mx-8 sm:mt-20 lg:mx-12"
         style={{
           background:
-            'radial-gradient(52.53% 57.5% at 50% 100%, rgba(8, 9, 10, 0) 0%, rgba(8, 9, 10, 0.5) 100%), linear-gradient(180deg, #08090a 10%, #8a8f98 100%)',
+            // Top-to-bottom: page black holds until the mock's vertical middle,
+            // then eases into the grey floor; a transparent-edged radial casts
+            // the soft light glow under the mock (pure CSS — an image layer
+            // with mix-blend would leave a visible edge where it ends).
+            'radial-gradient(48% 34% at 50% 100%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 72%), radial-gradient(52.53% 57.5% at 50% 100%, rgba(8, 9, 10, 0) 0%, rgba(8, 9, 10, 0.5) 100%), linear-gradient(180deg, #08090a 0%, #08090a 46%, #3f4245 80%, #8a8f98 100%)',
         }}
       >
         {/* Noise texture over the gradient, matching Linear's subtle film grain. */}
@@ -88,21 +92,6 @@ export function Hero() {
             backgroundImage: 'url(/hero/noise.png)',
             backgroundRepeat: 'repeat',
             backgroundSize: '480px',
-          }}
-        />
-
-        {/* Soft light glow cast beneath the render onto the floor. The image is
-            opaque (flat grey with a white glow), so it must span the full floor
-            width — clipped to a narrower column it screen-lightens only the
-            centre and leaves visible seams on wide viewports. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 opacity-70 mix-blend-screen"
-          style={{
-            backgroundImage: 'url(/hero/app-shadow.png)',
-            backgroundPosition: 'center bottom',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '100% 100%',
           }}
         />
 
