@@ -29,8 +29,8 @@ aplikacji — patrz `tailwind.config.js`.
 
 Styl inspirowany linear.app: near-black (#08090a), Inter semibold z ciasnym trackingiem, minimum koloru.
 
-1. **Hero** — nagłówek po lewej, link „Nowość · MCP →", pełne okno aplikacji (ciemny wariant design systemu) na gradientowej „podłodze"
-2. **CLI** — sekcja 580vh: przyklejony viewport, scroll przesuwa poziomo 4 etapy TUI (`/connect`, hot-reload, `/conflicts`, `/git`), ~160vh scrolla na przejście
+1. **Hero** — nagłówek po lewej, link „Nowość · MCP →", pełne okno aplikacji (ciemny wariant design systemu) na gradientowej „podłodze" z cieniem i odstępem od kolejnej sekcji
+2. **CLI** — sekcja 580vh: przyklejony viewport, terminal stoi w miejscu, a tipy podmieniają się na breakpointach scrolla (blur + przesunięcie z prawej do lewej). Terminal to replika 1:1 prawdziwego TUI z `apps/cli` (baner z tęczowym gradientem, status header, log, paleta slash-komend, overlay konfliktów i menu Git) — nie resetuje się, tylko dopisuje log i „wpisuje" komendy w prompt
 3. **MCP** — interaktywny czat o stałej wysokości: agent znajduje 2 konflikty, analizuje różnice, użytkownik wybiera strategię (przyciski, auto-wybór po 6,5 s), agent robi merge + checkpoint
 
 ## Uruchomienie

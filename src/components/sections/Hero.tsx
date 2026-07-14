@@ -67,22 +67,24 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* The real app — fully visible, floating on a soft light floor. */}
-      <div id="demo" className="relative mx-auto mt-16 max-w-6xl px-4 sm:mt-20 sm:px-6">
-        {/* Gradient floor behind/beneath the window, like Linear's hero */}
+      {/* The real app — fully visible, floating on a soft light floor with
+          breathing room below, like Linear's hero. */}
+      <div id="demo" className="relative mx-auto mt-16 max-w-6xl px-4 pb-24 sm:mt-20 sm:px-6 sm:pb-32">
+        {/* Gradient floor: a wide, soft glow behind and beneath the window that
+            fades out before the next section. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-16 -bottom-24"
+          className="pointer-events-none absolute -inset-x-16 top-12 bottom-0"
           style={{
             background:
-              'radial-gradient(80% 90% at 50% 100%, rgba(148, 163, 184, 0.16) 0%, rgba(148, 163, 184, 0.05) 45%, transparent 75%)',
+              'radial-gradient(75% 85% at 50% 55%, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.05) 50%, transparent 76%)',
           }}
         />
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
-          className="dark relative rounded-2xl ring-1 ring-white/10"
+          className="dark relative rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
         >
           <AppDemo />
         </motion.div>

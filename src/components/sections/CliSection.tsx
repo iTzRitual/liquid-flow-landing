@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion, useScroll } from 'motion/react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { Terminal } from './Terminal';
+
+const EASE_OUT = [0.215, 0.61, 0.355, 1] as const;
 
 /** Renders `code` spans for backtick-wrapped fragments in dictionary copy. */
 function InlineCode({ text }: { text: string }) {
@@ -23,78 +25,73 @@ function InlineCode({ text }: { text: string }) {
   );
 }
 
-function StepPanel({
-  index,
-  title,
-  body,
-  lang,
-  width = 'w-screen',
-}: {
-  index: number;
-  title: string;
-  body: string;
-  lang: 'pl' | 'en';
-  width?: string;
-}) {
+function TipContent({ index, count, title, body }: { index: number; count: number; title: string; body: string }) {
   return (
-    <div className={`flex ${width} shrink-0 items-center justify-center px-4 sm:px-6`}>
-      <div className="grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
-            {String(index + 1).padStart(2, '0')} / 04
-          </p>
-          <h3 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            <InlineCode text={title} />
-          </h3>
-          <p className="mt-4 max-w-md leading-relaxed text-ink-muted">
-            <InlineCode text={body} />
-          </p>
-        </div>
-        <Terminal frame={index} lang={lang} />
-      </div>
+    <div>
+      <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
+        {String(index + 1).padStart(2, '0')} / {String(count).padStart(2, '0')}
+      </p>
+      <h3 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        <InlineCode text={title} />
+      </h3>
+      <p className="mt-4 max-w-md leading-relaxed text-ink-muted">
+        <InlineCode text={body} />
+      </p>
     </div>
   );
 }
 
-/* Scroll length per stage — 120vh of vertical travel per panel keeps the
- * horizontal ride deliberate, so stages can't be skipped past. */
+/* Scroll length per stage — 120vh of vertical travel per tip keeps the ride
+ * deliberate, so stages can't be skipped past. */
 const VH_PER_STAGE = 120;
+
+/* Tips crossfade at breakpoints: the leaving one blurs and slides out to the
+ * left while the next one rides in from the right — simultaneously (both are
+ * absolutely positioned), so there is never an empty in-between state. */
+const tipVariants = {
+  enter: (dir: number) => ({ x: 64 * dir, opacity: 0, filter: 'blur(10px)' }),
+  center: { x: 0, opacity: 1, filter: 'blur(0px)' },
+  exit: (dir: number) => ({ x: -64 * dir, opacity: 0, filter: 'blur(10px)' }),
+};
 
 export function CliSection() {
   const { lang, t } = useLang();
   const reduceMotion = useReducedMotion();
   const sectionRef = React.useRef<HTMLElement>(null);
+  const steps = t.cli.steps;
+  const n = steps.length;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
   });
-  const steps = t.cli.steps;
-  // Piecewise mapping with plateaus: each stage rests centred for a stretch of
-  // scroll before the track slides to the next one, so no stage flies past.
-  const { input, output } = React.useMemo(() => {
-    const n = steps.length;
-    const pad = 0.09; // half-width of each plateau, in scroll-progress units
-    const inp: number[] = [];
-    const out: string[] = [];
-    for (let i = 0; i < n; i++) {
-      const centre = i / (n - 1);
-      inp.push(Math.max(0, centre - pad), Math.min(1, centre + pad));
-      out.push(`-${i * 100}vw`, `-${i * 100}vw`);
-    }
-    return { input: inp, output: out };
-  }, [steps.length]);
-  const x = useTransform(scrollYProgress, input, output);
+
+  const [stage, setStage] = React.useState(0);
+  const dirRef = React.useRef(1);
+  React.useEffect(
+    () =>
+      scrollYProgress.on('change', (v) => {
+        const next = Math.max(0, Math.min(n - 1, Math.round(v * (n - 1))));
+        setStage((prev) => {
+          if (next !== prev) dirRef.current = next > prev ? 1 : -1;
+          return next;
+        });
+      }),
+    [scrollYProgress, n],
+  );
 
   if (reduceMotion) {
-    // Reduced motion: a plain vertical stack, no sticky horizontal ride.
+    // Reduced motion: a plain vertical stack, each stage as a static terminal.
     return (
       <section id="cli" className="border-t border-white/5 bg-night-900">
         <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
           <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
           <div className="mt-16 flex flex-col gap-20">
             {steps.map((step, i) => (
-              <StepPanel key={i} index={i} title={step.title} body={step.body} lang={lang} width="w-full" />
+              <div key={i} className="grid items-center gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
+                <TipContent index={i} count={n} title={step.title} body={step.body} />
+                <Terminal stage={i} lang={lang} animate={false} />
+              </div>
             ))}
           </div>
         </div>
@@ -107,20 +104,35 @@ export function CliSection() {
       id="cli"
       ref={sectionRef}
       className="relative border-t border-white/5 bg-night-900"
-      style={{ height: `${steps.length * VH_PER_STAGE + 100}vh` }}
+      style={{ height: `${n * VH_PER_STAGE + 100}vh` }}
     >
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
+
+          {/* The terminal stays put in the centre; only the tip column swaps. */}
+          <div className="mt-10 grid items-center gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
+            <div className="relative min-h-[168px] sm:min-h-[208px]">
+              <AnimatePresence initial={false} custom={dirRef.current}>
+                <motion.div
+                  key={stage}
+                  custom={dirRef.current}
+                  variants={tipVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.5, ease: EASE_OUT }}
+                  className="absolute inset-x-0 top-0"
+                >
+                  <TipContent index={stage} count={n} title={steps[stage].title} body={steps[stage].body} />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <Terminal stage={stage} lang={lang} />
+          </div>
+
+          <ProgressDots active={stage} count={n} />
         </div>
-
-        <motion.div style={{ x }} className="mt-10 flex will-change-transform">
-          {steps.map((step, i) => (
-            <StepPanel key={i} index={i} title={step.title} body={step.body} lang={lang} />
-          ))}
-        </motion.div>
-
-        <ProgressDots progress={scrollYProgress} count={steps.length} />
       </div>
     </section>
   );
@@ -137,18 +149,7 @@ function CliHeading({ heading, subtitle }: { heading: string; subtitle: string }
   );
 }
 
-function ProgressDots({
-  progress,
-  count,
-}: {
-  progress: ReturnType<typeof useScroll>['scrollYProgress'];
-  count: number;
-}) {
-  const [active, setActive] = React.useState(0);
-  React.useEffect(
-    () => progress.on('change', (v) => setActive(Math.min(count - 1, Math.round(v * (count - 1))))),
-    [progress, count],
-  );
+function ProgressDots({ active, count }: { active: number; count: number }) {
   return (
     <div className="mt-10 flex items-center justify-center gap-2" aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
