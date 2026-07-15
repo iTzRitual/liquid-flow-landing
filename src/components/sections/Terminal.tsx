@@ -385,7 +385,7 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
 
 const TYPE_MS = 65; // per-character typing speed
 const OPEN_DELAY_MS = 380; // pause between Enter and the overlay opening
-const REVEAL_MS = 280; // gap between successive log lines printing in
+const REVEAL_MS = 440; // gap between successive log lines printing in (paced to feel like a live connection, not a dump)
 
 type Ui = { stage: number; typed: string; settled: boolean };
 
