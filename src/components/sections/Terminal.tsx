@@ -418,30 +418,37 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
   const paletteOpen = ui.stage === 0;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/60">
-      {/* macOS title bar */}
-      <div className="flex items-center gap-2 border-b border-white/5 bg-[#10151c] px-4 py-3">
-        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" aria-hidden="true" />
-        <span className="h-3 w-3 rounded-full bg-[#febc2e]" aria-hidden="true" />
-        <span className="h-3 w-3 rounded-full bg-[#28c840]" aria-hidden="true" />
-        <span className="ml-3 font-mono text-xs text-slate-500">liquidflow — zsh</span>
-      </div>
+    /* Below lg the stage is tight, so the window shows only its bottom part:
+       a fixed-height crop anchored to the content's end (input row, latest log,
+       overlays), with the top edge dissolving into the background via a mask
+       gradient — the titlebar may vanish under the fade, by design. On lg+ the
+       wrapper is inert and the full frame renders exactly as before. */
+    <div className="flex h-[clamp(160px,calc(100svh-390px),280px)] flex-col justify-end overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)] sm:h-[clamp(180px,calc(100svh-420px),420px)] lg:h-auto lg:overflow-visible lg:[mask-image:none]">
+      <div className="shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/60">
+        {/* macOS title bar */}
+        <div className="flex items-center gap-2 border-b border-white/5 bg-[#10151c] px-4 py-3">
+          <span className="h-3 w-3 rounded-full bg-[#ff5f57]" aria-hidden="true" />
+          <span className="h-3 w-3 rounded-full bg-[#febc2e]" aria-hidden="true" />
+          <span className="h-3 w-3 rounded-full bg-[#28c840]" aria-hidden="true" />
+          <span className="ml-3 font-mono text-xs text-slate-500">liquidflow — zsh</span>
+        </div>
 
-      <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
-        <Header lang={lang} />
-        <Rule />
-        <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} />
-        <AnimatePresence mode="wait" initial={false}>
-          {overlayOpen && ui.stage === 2 && <ConflictsOverlay key="conflicts" lang={lang} />}
-          {overlayOpen && ui.stage === 3 && <GitOverlay key="git" lang={lang} />}
-        </AnimatePresence>
-        {!overlayOpen && (
-          <>
-            <Rule />
-            {paletteOpen && <Palette lang={lang} />}
-            <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
-          </>
-        )}
+        <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
+          <Header lang={lang} />
+          <Rule />
+          <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} />
+          <AnimatePresence mode="wait" initial={false}>
+            {overlayOpen && ui.stage === 2 && <ConflictsOverlay key="conflicts" lang={lang} />}
+            {overlayOpen && ui.stage === 3 && <GitOverlay key="git" lang={lang} />}
+          </AnimatePresence>
+          {!overlayOpen && (
+            <>
+              <Rule />
+              {paletteOpen && <Palette lang={lang} />}
+              <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

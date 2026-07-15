@@ -111,10 +111,14 @@ export function CliSection() {
           padding instead of clipping the heading off-screen. */}
       <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
         <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-10 pt-20 sm:px-6 lg:py-10">
-          <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
+          {/* Below lg the stage stacks to one column and space is tight — the
+              tips and terminal carry the story, so the heading sits this one out. */}
+          <div className="hidden lg:block">
+            <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
+          </div>
 
           {/* The terminal stays put in the centre; only the tip column swaps. */}
-          <div className="mt-10 grid items-center gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
+          <div className="grid items-center gap-8 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
             <div className="relative min-h-[168px] sm:min-h-[208px]">
               <AnimatePresence initial={false} custom={dirRef.current}>
                 <motion.div
