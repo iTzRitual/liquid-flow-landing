@@ -269,22 +269,17 @@ function Palette({ lang }: { lang: Lang }) {
   );
 }
 
-/* Cyan round-border overlay frame (Ink `borderStyle="round" borderColor="cyan"`). */
+/* Cyan round-border overlay frame (Ink `borderStyle="round" borderColor="cyan"`).
+ * The animation lives on the height-morphing wrapper in the terminal body, so
+ * this is a plain frame — no per-panel entrance to fight the height morph. */
 function OverlayFrame({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: 6, filter: 'blur(6px)' }}
-      transition={{ duration: 0.3, ease: EASE_OUT }}
-      className="rounded-md border px-2 py-1"
-      style={{ borderColor: C.cyan }}
-    >
+    <div className="rounded-md border px-2 py-1" style={{ borderColor: C.cyan }}>
       <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.cyan }}>
         {title}
       </div>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -480,18 +475,61 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
         <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
           <Header lang={lang} />
           <Rule />
-          <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} animate={animate} />
-          <AnimatePresence mode="wait" initial={false}>
-            {overlayOpen && ui.stage === 2 && <ConflictsOverlay key="conflicts" lang={lang} />}
-            {overlayOpen && ui.stage === 3 && <GitOverlay key="git" lang={lang} />}
+          {/* Log-line `layout` is disabled once overlays are in play (stage ≥ 2):
+              there, the bottom zone's height morph owns all vertical movement —
+              the logs ride it via flex. Letting the lines self-animate too would
+              double up and reintroduce the gap. `layout` stays on for stage 0→1
+              line-printing, which the height morph doesn't cover. */}
+          <LogPane
+            lines={visibleLines}
+            dim={overlayOpen}
+            animateFrom={animateFrom}
+            animate={animate && ui.stage < 2}
+          />
+          {/* One persistent bottom zone. Whatever is current (input row, or a
+              conflicts/git overlay) collapses to/expands from height 0, so the
+              flex-1 log pane is pushed and pulled at exactly the panel's rate —
+              logs stay glued to its top edge with no gap and no jump. */}
+          <AnimatePresence initial={false}>
+            {overlayOpen && ui.stage === 2 && (
+              <motion.div
+                key="conflicts"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="overflow-hidden"
+              >
+                <ConflictsOverlay lang={lang} />
+              </motion.div>
+            )}
+            {overlayOpen && ui.stage === 3 && (
+              <motion.div
+                key="git"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="overflow-hidden"
+              >
+                <GitOverlay lang={lang} />
+              </motion.div>
+            )}
+            {!overlayOpen && (
+              <motion.div
+                key="input"
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="overflow-hidden"
+              >
+                <Rule />
+                {paletteOpen && <Palette lang={lang} />}
+                <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
+              </motion.div>
+            )}
           </AnimatePresence>
-          {!overlayOpen && (
-            <>
-              <Rule />
-              {paletteOpen && <Palette lang={lang} />}
-              <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
-            </>
-          )}
         </div>
       </div>
     </div>
