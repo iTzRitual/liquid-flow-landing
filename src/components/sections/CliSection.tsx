@@ -106,13 +106,20 @@ export function CliSection() {
       className="relative bg-night-950"
       style={{ height: `${n * VH_PER_STAGE + 100}vh` }}
     >
+      {/* Below lg the heading rides in normal flow at the top of the section and
+          scrolls away as the pinned stage takes over — it can't share the tight
+          one-column sticky stage. On lg+ it lives inside the pinned stage instead. */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-4 pt-24 sm:px-6 lg:hidden">
+        <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
+      </div>
+
       {/* `my-auto` centres the stage like `justify-center`, but degrades safely:
           when the content is taller than the viewport it pins to the top with
           padding instead of clipping the heading off-screen. */}
       <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
         <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-10 pt-20 sm:px-6 lg:py-10">
-          {/* Below lg the stage stacks to one column and space is tight — the
-              tips and terminal carry the story, so the heading sits this one out. */}
+          {/* On lg+ the heading sits inside the pinned stage; below lg it scrolls
+              above in normal flow (rendered separately, higher in the section). */}
           <div className="hidden lg:block">
             <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
           </div>
