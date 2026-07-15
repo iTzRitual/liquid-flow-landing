@@ -202,7 +202,17 @@ function Header({ lang }: { lang: Lang }) {
  * bottom-anchored absolute container inside an overflow-hidden parent: when the
  * area shrinks (palette/overlay opening) the oldest lines are clipped at the
  * top — like a real terminal — instead of the flex layout squashing them. */
-function LogPane({ lines, dim, animateFrom }: { lines: LogLine[]; dim: boolean; animateFrom: number }) {
+function LogPane({
+  lines,
+  dim,
+  animateFrom,
+  animate,
+}: {
+  lines: LogLine[];
+  dim: boolean;
+  animateFrom: number;
+  animate: boolean;
+}) {
   return (
     <div
       className={`relative min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ${
@@ -213,9 +223,19 @@ function LogPane({ lines, dim, animateFrom }: { lines: LogLine[]; dim: boolean; 
       {lines.map((l, i) => (
         <motion.div
           key={i}
+          // `layout="position"` animates the vertical shift of already-visible
+          // lines when the log block regrows (new lines append) or the pane
+          // shrinks under an overlay — so the "scroll" glides instead of jumping.
+          // The layout tween carries its own timing with NO delay, otherwise it
+          // would inherit the opacity stagger below and fall apart line-by-line.
+          layout={animate ? 'position' : undefined}
           initial={i >= animateFrom ? { opacity: 0 } : false}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: i >= animateFrom ? (i - animateFrom) * 0.28 : 0 }}
+          transition={{
+            duration: 0.3,
+            delay: i >= animateFrom ? (i - animateFrom) * 0.28 : 0,
+            layout: { duration: 0.5, ease: EASE_OUT },
+          }}
           className="overflow-hidden text-ellipsis whitespace-pre"
           style={{ color: l.color }}
         >
@@ -436,7 +456,7 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
         <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
           <Header lang={lang} />
           <Rule />
-          <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} />
+          <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} animate={animate} />
           <AnimatePresence mode="wait" initial={false}>
             {overlayOpen && ui.stage === 2 && <ConflictsOverlay key="conflicts" lang={lang} />}
             {overlayOpen && ui.stage === 3 && <GitOverlay key="git" lang={lang} />}
