@@ -2,271 +2,13 @@
 
 import * as React from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { ArrowUp, Bot, Check, Loader2, Paperclip, User } from 'lucide-react';
+import { ArrowUp, Bot, Check, Loader2, Paperclip } from 'lucide-react';
 import { useLang } from '@/i18n/LanguageProvider';
-import type { Lang } from '@/i18n/dictionaries';
+import { SCENARIO_COUNT, SCRIPTS, type ChatEvent, type Choice } from './mcpScenarios';
 
 const EASE_OUT = [0.215, 0.61, 0.355, 1] as const;
 const STEP_DELAY_MS = 1300;
 const AUTO_DECIDE_MS = 6500;
-
-/* ————— The scripted workflow ————— */
-
-type ChatEvent =
-  | { kind: 'user'; text: string }
-  | { kind: 'agent'; text: string }
-  | { kind: 'tool'; tool: string; args: string; result: string }
-  | { kind: 'decision' };
-
-interface Choice {
-  id: string;
-  label: string;
-  recommended?: boolean;
-  /** Events appended after the visitor picks this choice. */
-  events: ChatEvent[];
-}
-
-interface Script {
-  intro: ChatEvent[];
-  choices: Choice[];
-}
-
-const SCRIPTS: Record<Lang, Script> = {
-  pl: {
-    intro: [
-      { kind: 'user', text: 'Sprawdź konflikty w sklepie Ogródek i pomóż mi je rozwiązać.' },
-      { kind: 'tool', tool: 'get_mismatches', args: '{}', result: '2 konflikty' },
-      { kind: 'agent', text: 'Masz 2 konflikty z panelem administracyjnym. Sprawdzam, co dokładnie się różni…' },
-      {
-        kind: 'tool',
-        tool: 'preview_conflict',
-        args: '"components/header.liquid"',
-        result: 'lokalny nowszy o 2 h',
-      },
-      {
-        kind: 'tool',
-        tool: 'preview_conflict',
-        args: '"css/theme.css"',
-        result: 'zmieniony w panelu 20 min temu',
-      },
-      {
-        kind: 'agent',
-        text:
-          'header.liquid — Twoja lokalna wersja jest nowsza: przebudowany nagłówek i dodane menu mobilne.\n' +
-          'theme.css — zmieniony w panelu: ktoś poprawił kolory przycisków w promocji.\n\n' +
-          'Które wersje mam zachować?',
-      },
-      { kind: 'decision' },
-    ],
-    choices: [
-      {
-        id: 'mixed',
-        label: 'Lokalny header, theme ze sklepu',
-        recommended: true,
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → push',
-            result: 'nadpisano wersję w sklepie',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → pull',
-            result: 'pobrano wersję z panelu',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"merge: header lokalny, theme z panelu"',
-            result: 'squash wip → main (f3d9a21)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Gotowe. Nagłówek z menu mobilnym jest już w sklepie, kolory przycisków z panelu zostały pobrane lokalnie, a całość zabezpieczyłem checkpointem na main.',
-          },
-        ],
-      },
-      {
-        id: 'local',
-        label: 'Zachowaj obie lokalne',
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → push',
-            result: 'nadpisano wersję w sklepie',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → push',
-            result: 'nadpisano wersję w sklepie',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"resolve: wersje lokalne"',
-            result: 'squash wip → main (b81c4e0)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Zrobione — obie lokalne wersje są w sklepie. Uwaga: zmiana kolorów z panelu została nadpisana; masz ją w historii Git, gdyby trzeba było wrócić.',
-          },
-        ],
-      },
-      {
-        id: 'remote',
-        label: 'Pobierz obie ze sklepu',
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → pull',
-            result: 'pobrano wersję z panelu',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → pull',
-            result: 'pobrano wersję z panelu',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"resolve: wersje z panelu"',
-            result: 'squash wip → main (9d2e77c)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Pobrane — folder lokalny odpowiada teraz sklepowi. Twoja wcześniejsza praca nad nagłówkiem jest bezpieczna w historii Git.',
-          },
-        ],
-      },
-    ],
-  },
-  en: {
-    intro: [
-      { kind: 'user', text: 'Check the Ogródek shop for conflicts and help me resolve them.' },
-      { kind: 'tool', tool: 'get_mismatches', args: '{}', result: '2 conflicts' },
-      { kind: 'agent', text: 'You have 2 conflicts with the admin panel. Checking what exactly differs…' },
-      {
-        kind: 'tool',
-        tool: 'preview_conflict',
-        args: '"components/header.liquid"',
-        result: 'local newer by 2 h',
-      },
-      {
-        kind: 'tool',
-        tool: 'preview_conflict',
-        args: '"css/theme.css"',
-        result: 'changed in panel 20 min ago',
-      },
-      {
-        kind: 'agent',
-        text:
-          'header.liquid — your local version is newer: rebuilt header plus a new mobile menu.\n' +
-          'theme.css — changed in the panel: someone tweaked button colors for a promo.\n\n' +
-          'Which versions should I keep?',
-      },
-      { kind: 'decision' },
-    ],
-    choices: [
-      {
-        id: 'mixed',
-        label: 'Local header, theme from shop',
-        recommended: true,
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → push',
-            result: 'shop version overwritten',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → pull',
-            result: 'panel version pulled',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"merge: local header, panel theme"',
-            result: 'squash wip → main (f3d9a21)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Done. The header with the mobile menu is live in the shop, the panel button colors are pulled locally, and everything is secured with a checkpoint on main.',
-          },
-        ],
-      },
-      {
-        id: 'local',
-        label: 'Keep both local',
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → push',
-            result: 'shop version overwritten',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → push',
-            result: 'shop version overwritten',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"resolve: local versions"',
-            result: 'squash wip → main (b81c4e0)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Done — both local versions are in the shop. Note: the panel color change was overwritten; it stays in Git history if you need it back.',
-          },
-        ],
-      },
-      {
-        id: 'remote',
-        label: 'Pull both from shop',
-        events: [
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"components/header.liquid" → pull',
-            result: 'panel version pulled',
-          },
-          {
-            kind: 'tool',
-            tool: 'resolve_conflict',
-            args: '"css/theme.css" → pull',
-            result: 'panel version pulled',
-          },
-          {
-            kind: 'tool',
-            tool: 'git_checkpoint',
-            args: '"resolve: panel versions"',
-            result: 'squash wip → main (9d2e77c)',
-          },
-          {
-            kind: 'agent',
-            text:
-              'Pulled — your local folder now matches the shop. Your earlier header work is safe in Git history.',
-          },
-        ],
-      },
-    ],
-  },
-};
 
 /* ————— Rendering ————— */
 
@@ -280,11 +22,14 @@ function Message({ event, done }: { event: ChatEvent; done: boolean }) {
 
   if (event.kind === 'user') {
     return (
-      <motion.div {...base} className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10">
-          <User className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
-        </span>
-        <p className="rounded-xl rounded-tl-sm bg-white/[0.06] px-4 py-2.5 text-sm leading-relaxed text-ink">
+      <motion.div {...base} className="flex flex-row-reverse items-start gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/user-avatar.jpeg"
+          alt=""
+          className="mt-0.5 h-7 w-7 shrink-0 rounded-full bg-white/10 object-cover"
+        />
+        <p className="rounded-xl rounded-tr-sm bg-white/[0.06] px-4 py-2.5 text-sm leading-relaxed text-ink">
           {event.text}
         </p>
       </motion.div>
@@ -327,7 +72,14 @@ function Message({ event, done }: { event: ChatEvent; done: boolean }) {
 export function McpSection() {
   const { lang, t } = useLang();
   const reduceMotion = useReducedMotion();
-  const script = SCRIPTS[lang];
+
+  // A random scenario plays on each visit. Start at 0 (server and first client
+  // render agree — no hydration mismatch), then pick a random one on mount.
+  const [scenario, setScenario] = React.useState(0);
+  React.useEffect(() => {
+    setScenario(Math.floor(Math.random() * SCENARIO_COUNT));
+  }, []);
+  const script = SCRIPTS[lang][scenario];
 
   const chatRef = React.useRef<HTMLDivElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -338,7 +90,7 @@ export function McpSection() {
   const [visible, setVisible] = React.useState(0);
   const [choiceId, setChoiceId] = React.useState<string | null>(null);
 
-  // Restart the conversation when the language flips.
+  // Restart the conversation when the scenario or language flips.
   React.useEffect(() => {
     setEvents(script.intro);
     setVisible(0);
