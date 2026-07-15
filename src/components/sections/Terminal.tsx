@@ -427,7 +427,7 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
         <span className="ml-3 font-mono text-xs text-slate-500">liquidflow — zsh</span>
       </div>
 
-      <div className="flex h-[440px] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[480px] sm:px-3 sm:text-[12.5px]">
+      <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
         <Header lang={lang} />
         <Rule />
         <LogPane lines={visibleLines} dim={overlayOpen} animateFrom={animateFrom} />

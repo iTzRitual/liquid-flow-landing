@@ -106,8 +106,11 @@ export function CliSection() {
       className="relative bg-night-950"
       style={{ height: `${n * VH_PER_STAGE + 100}vh` }}
     >
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      {/* `my-auto` centres the stage like `justify-center`, but degrades safely:
+          when the content is taller than the viewport it pins to the top with
+          padding instead of clipping the heading off-screen. */}
+      <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
+        <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-10 pt-20 sm:px-6 lg:py-10">
           <CliHeading heading={t.cli.heading} subtitle={t.cli.subtitle} />
 
           {/* The terminal stays put in the centre; only the tip column swaps. */}

@@ -74,7 +74,7 @@ export function Hero() {
           hero container. */}
       <div
         id="demo"
-        className="relative mx-4 mt-16 overflow-hidden rounded-3xl sm:mx-8 sm:mt-20 lg:mx-12"
+        className="relative mt-16 overflow-hidden sm:mx-8 sm:mt-20 sm:rounded-3xl lg:mx-12"
         style={{
           background:
             // Top-to-bottom: page black holds until the mock's vertical middle,
@@ -96,11 +96,13 @@ export function Hero() {
         />
 
         <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20">
+          {/* Below sm the mock renders ~133% wide and clips at the floor's right
+              edge — you see the left ~75% at a legible size, like Linear mobile. */}
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
-            className="dark relative mx-auto max-w-[1080px] rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)]"
+            className="dark relative w-[133.333%] max-w-[1080px] rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)] sm:mx-auto sm:w-auto"
           >
             <AppDemo />
           </motion.div>
