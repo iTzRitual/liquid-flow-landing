@@ -233,7 +233,6 @@ function LogPane({
           animate={{ opacity: 1 }}
           transition={{
             duration: 0.3,
-            delay: i >= animateFrom ? (i - animateFrom) * 0.28 : 0,
             layout: { duration: 0.5, ease: EASE_OUT },
           }}
           className="overflow-hidden text-ellipsis whitespace-pre"
@@ -391,6 +390,7 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
 
 const TYPE_MS = 65; // per-character typing speed
 const OPEN_DELAY_MS = 380; // pause between Enter and the overlay opening
+const REVEAL_MS = 280; // gap between successive log lines printing in
 
 type Ui = { stage: number; typed: string; settled: boolean };
 
@@ -431,8 +431,32 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
 
   const s = strings(lang);
   const lines = React.useMemo(() => logLines(lang), [lang]);
-  const visibleLines = lines.filter((l) => l.stage <= ui.stage);
-  // Stage-1 lines fade in one by one when freshly reached (scrolling forward).
+
+  // How many log lines are currently printed. Newly-reached stages don't dump
+  // their lines at once — they print one at a time (see effect below), so each
+  // appended row pushes the log up by one row via the layout animation, instead
+  // of snapping to the final height and filling empty space afterwards.
+  const [shown, setShown] = React.useState(() => lines.filter((l) => l.stage <= stage).length);
+  const shownRef = React.useRef(shown);
+  React.useEffect(() => {
+    const target = lines.filter((l) => l.stage <= ui.stage).length;
+    // Backwards, reduced motion, or no new lines → snap to the target count.
+    if (!animate || target <= shownRef.current) {
+      shownRef.current = target;
+      setShown(target);
+      return;
+    }
+    // Forward with new lines: print them one by one, REVEAL_MS apart.
+    const id = setInterval(() => {
+      shownRef.current += 1;
+      setShown(shownRef.current);
+      if (shownRef.current >= target) clearInterval(id);
+    }, REVEAL_MS);
+    return () => clearInterval(id);
+  }, [ui.stage, animate, lines]);
+
+  const visibleLines = lines.slice(0, shown);
+  // Stage-1 lines fade in as they print (scrolling forward).
   const animateFrom = animate && ui.stage >= 1 ? lines.filter((l) => l.stage === 0).length : visibleLines.length;
   const overlayOpen = ui.settled && ui.stage >= 2;
   const paletteOpen = ui.stage === 0;
