@@ -70,7 +70,7 @@ const pl = {
     mcp: {
       heading: 'Trzeci tryb: agent AI przez MCP',
       subtitle:
-        'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i zrobi checkpoint w Git.',
+        'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i wprowadzi zmiany prosto w sklepie.',
       inputPlaceholder: 'Napisz do agenta…',
     },
     footer: {
@@ -152,7 +152,7 @@ const en: Dictionary = {
     mcp: {
       heading: 'A third mode: AI agents over MCP',
       subtitle:
-        'Liquid Flow ships an MCP server so agents (Claude Code, Claude Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and create a Git checkpoint on its own.',
+        'Liquid Flow ships an MCP server so agents (Claude Code, Claude Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and apply your changes straight to the shop.',
       inputPlaceholder: 'Tell the agent what to do…',
     },
     footer: {
