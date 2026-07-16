@@ -160,7 +160,7 @@ const en: Dictionary = {
     mcp: {
       heading: 'A third mode: AI agents over MCP',
       subtitle:
-        'Liquid Flow ships an MCP server so agents (Claude Code, Claude Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and apply your changes straight to the shop.',
+        'Liquid Flow ships an MCP server so agents (Claude Code, Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and apply your changes straight to the shop.',
       inputPlaceholder: 'Tell the agent what to do…',
     },
     footer: {
