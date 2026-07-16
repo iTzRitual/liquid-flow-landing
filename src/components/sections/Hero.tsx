@@ -35,6 +35,30 @@ export function Hero() {
           <p className="max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
             {t.hero.subtitle}
           </p>
+        </motion.div>
+
+        <motion.div
+          {...fadeUp(0.12)}
+          className="mt-8 flex flex-wrap items-center justify-between gap-3"
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-night-950 transition-[background-color,transform] hover:bg-white active:scale-[0.97]"
+            >
+              <Github className="h-4 w-4" aria-hidden="true" />
+              {t.hero.ctaPrimary}
+            </a>
+            <a
+              href="#cli"
+              className="rounded-full px-4 py-2.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              {t.hero.ctaSecondary}
+            </a>
+          </div>
+
           <a
             href="#mcp"
             className="group flex shrink-0 items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink"
@@ -45,24 +69,6 @@ export function Hero() {
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden="true"
             />
-          </a>
-        </motion.div>
-
-        <motion.div {...fadeUp(0.12)} className="mt-8 flex flex-wrap items-center gap-3">
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-night-950 transition-[background-color,transform] hover:bg-white active:scale-[0.97]"
-          >
-            <Github className="h-4 w-4" aria-hidden="true" />
-            {t.hero.ctaPrimary}
-          </a>
-          <a
-            href="#cli"
-            className="rounded-full px-4 py-2.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-          >
-            {t.hero.ctaSecondary}
           </a>
         </motion.div>
       </div>
