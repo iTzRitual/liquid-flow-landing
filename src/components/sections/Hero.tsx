@@ -6,15 +6,15 @@ import { useLang } from '@/i18n/LanguageProvider';
 import { AppDemo } from '../demo/AppDemo';
 import { GITHUB_URL } from '../Navbar';
 
-const EASE_OUT = [0.215, 0.61, 0.355, 1] as const;
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 export function Hero() {
   const { t } = useLang();
   const reduceMotion = useReducedMotion();
 
   const fadeUp = (delay: number) => ({
-    initial: reduceMotion ? false : { opacity: 0, y: 16 },
-    animate: { opacity: 1, y: 0 },
+    initial: reduceMotion ? false : { opacity: 0, y: '20%', filter: 'blur(10px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
     transition: { duration: 0.5, delay, ease: EASE_OUT },
   });
 
@@ -29,7 +29,7 @@ export function Hero() {
         </motion.h1>
 
         <motion.div
-          {...fadeUp(0.1)}
+          {...fadeUp(0.06)}
           className="mt-8 flex flex-col gap-6 sm:mt-10 sm:flex-row sm:items-end sm:justify-between"
         >
           <p className="max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
@@ -48,7 +48,7 @@ export function Hero() {
           </a>
         </motion.div>
 
-        <motion.div {...fadeUp(0.18)} className="mt-8 flex flex-wrap items-center gap-3">
+        <motion.div {...fadeUp(0.12)} className="mt-8 flex flex-wrap items-center gap-3">
           <a
             href={GITHUB_URL}
             target="_blank"
@@ -99,9 +99,9 @@ export function Hero() {
           {/* Below sm the mock renders ~133% wide and clips at the floor's right
               edge — you see the left ~75% at a legible size, like Linear mobile. */}
           <motion.div
-            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.26, ease: EASE_OUT }}
+            initial={reduceMotion ? false : { opacity: 0, y: 24, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.6, delay: 0.18, ease: EASE_OUT }}
             className="dark relative w-[133.333%] max-w-[1080px] rounded-2xl ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(0,0,0,0.85)] sm:mx-auto sm:w-auto"
           >
             <AppDemo />
