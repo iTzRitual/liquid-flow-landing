@@ -26,7 +26,7 @@ import {
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 780;
 
-const MAX_LOG = 14;
+const MAX_LOG = 100;
 const SCRIPT_INTERVAL_MS = 2600;
 
 function timeAt(step: number): string {
