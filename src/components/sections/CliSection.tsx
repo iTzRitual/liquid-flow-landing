@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { AnimatePresence, motion, useReducedMotion, useScroll } from 'motion/react';
+import { AnimatePresence, motion, useInView, useReducedMotion, useScroll } from 'motion/react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { Terminal } from './Terminal';
 
@@ -58,6 +58,10 @@ export function CliSection() {
   const { lang, t } = useLang();
   const reduceMotion = useReducedMotion();
   const sectionRef = React.useRef<HTMLElement>(null);
+  // The cold-boot intro (typing `/connect`) fires when the pinned stage scrolls
+  // into view — not on page load, when it would play unseen far above the fold.
+  const stageRef = React.useRef<HTMLDivElement>(null);
+  const stageInView = useInView(stageRef, { once: true, amount: 0.6 });
   const steps = t.cli.steps;
   const n = steps.length;
 
@@ -125,7 +129,10 @@ export function CliSection() {
           </div>
 
           {/* The terminal stays put in the centre; only the tip column swaps. */}
-          <div className="grid items-center gap-8 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
+          <div
+            ref={stageRef}
+            className="grid items-center gap-8 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14"
+          >
             <div className="relative min-h-[168px] sm:min-h-[208px]">
               <AnimatePresence initial={false} custom={dirRef.current}>
                 <motion.div
@@ -142,7 +149,7 @@ export function CliSection() {
                 </motion.div>
               </AnimatePresence>
             </div>
-            <Terminal stage={stage} lang={lang} />
+            <Terminal stage={stage} lang={lang} active={stageInView} />
           </div>
 
           <ProgressDots active={stage} count={n} />

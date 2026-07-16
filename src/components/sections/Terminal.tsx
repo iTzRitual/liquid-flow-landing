@@ -506,6 +506,8 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
 const TYPE_MS = 65; // per-character typing speed
 const OPEN_DELAY_MS = 380; // pause between Enter and the overlay opening
 const REVEAL_MS = 440; // gap between successive log lines printing in (paced to feel like a live connection, not a dump)
+const INTRO_START_MS = 620; // beat on the cold prompt before `/connect` types itself
+const CONNECT_CMD = '/connect';
 
 type Ui = { stage: number; typed: string; settled: boolean };
 
@@ -517,13 +519,57 @@ const overlayKindFor = (stage: number): OverlayKind | null =>
 /** Command typed into the prompt on the way into a stage (empty = nothing typed). */
 const stageCmd = (stage: number) => (stage === 3 ? '/conflicts' : stage === 4 ? '/git' : '');
 
-export function Terminal({ stage, lang, animate = true }: { stage: number; lang: Lang; animate?: boolean }) {
-  const [ui, setUi] = React.useState<Ui>({ stage, typed: '', settled: true });
+export function Terminal({
+  stage,
+  lang,
+  animate = true,
+  active = true,
+}: {
+  stage: number;
+  lang: Lang;
+  animate?: boolean;
+  active?: boolean;
+}) {
+  // Stage 0 starts cold (unsettled → bare input) so the intro can type into it;
+  // every other stage (and reduced motion) starts settled on its end-state.
+  const [ui, setUi] = React.useState<Ui>({ stage, typed: '', settled: !(animate && stage === 0) });
   const prevRef = React.useRef(stage);
+  const introDoneRef = React.useRef(false);
 
   React.useEffect(() => {
     const prev = prevRef.current;
     prevRef.current = stage;
+
+    // Stage 0 cold-boot intro: launch → `/` opens the palette → `/connect` types
+    // itself → the sign-in form opens. Plays once, only after the stage scrolls
+    // into view; if the user scrolls on mid-type, the stage change cancels it.
+    if (animate && stage === 0) {
+      if (!active || introDoneRef.current) {
+        setUi({ stage: 0, typed: '', settled: introDoneRef.current });
+        return;
+      }
+      introDoneRef.current = true;
+      setUi({ stage: 0, typed: '', settled: false });
+      let i = 0;
+      let typer: ReturnType<typeof setInterval> | undefined;
+      let opener: ReturnType<typeof setTimeout> | undefined;
+      const starter = setTimeout(() => {
+        typer = setInterval(() => {
+          i += 1;
+          setUi((u) => ({ ...u, typed: CONNECT_CMD.slice(0, i) }));
+          if (i >= CONNECT_CMD.length) {
+            clearInterval(typer);
+            opener = setTimeout(() => setUi({ stage: 0, typed: '', settled: true }), OPEN_DELAY_MS);
+          }
+        }, TYPE_MS);
+      }, INTRO_START_MS);
+      return () => {
+        clearTimeout(starter);
+        if (typer) clearInterval(typer);
+        if (opener) clearTimeout(opener);
+      };
+    }
+
     const cmd = stageCmd(stage);
     // Backwards, reduced motion, or a stage without a command → settle instantly.
     if (!animate || stage <= prev || !cmd) {
@@ -547,7 +593,7 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
       clearInterval(typer);
       if (opener) clearTimeout(opener);
     };
-  }, [stage, animate]);
+  }, [stage, active, animate]);
 
   const s = strings(lang);
   const lines = React.useMemo(() => logLines(lang), [lang]);
@@ -580,9 +626,10 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
   const animateFrom = animate ? 0 : visibleLines.length;
   const overlayKind = overlayKindFor(ui.stage);
   const overlayOpen = ui.settled && overlayKind !== null;
-  // The slash palette only shows while a command is being typed at the cold start
-  // (stage-0 intro); every settled stage shows its overlay or the bare input row.
-  const paletteOpen = ui.stage === 0 && !ui.settled;
+  // The slash palette only shows once `/` has been typed during the cold-start
+  // intro; before that it's a bare prompt, and every settled stage shows its
+  // overlay or the plain input row.
+  const paletteOpen = ui.stage === 0 && !ui.settled && ui.typed.startsWith('/');
 
   return (
     /* Below lg the stage is tight, so the window shows only its bottom part:
