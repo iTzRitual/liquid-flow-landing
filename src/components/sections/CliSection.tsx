@@ -110,7 +110,10 @@ export function CliSection() {
       id="cli"
       ref={sectionRef}
       className="relative bg-night-950"
-      style={{ height: `${n * VH_PER_STAGE + 100}vh` }}
+      // Clamped in px so the scroll ride stops scaling on huge viewports —
+      // below ~1100px of viewport height this is identical to the plain
+      // `${n * VH_PER_STAGE + 100}vh` it replaces.
+      style={{ height: `calc(${n} * min(${VH_PER_STAGE}vh, 1400px) + min(100vh, 1200px))` }}
     >
       {/* Below lg the heading rides in normal flow at the top of the section and
           scrolls away as the pinned stage takes over — it can't share the tight
@@ -121,8 +124,15 @@ export function CliSection() {
 
       {/* `my-auto` centres the stage like `justify-center`, but degrades safely:
           when the content is taller than the viewport it pins to the top with
-          padding instead of clipping the heading off-screen. */}
-      <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
+          padding instead of clipping the heading off-screen. The stage height
+          is capped at 1200px so it doesn't balloon into a mostly-empty pinned
+          screen on huge viewports; `top` re-centers the capped stage in taller
+          viewports instead of leaving it glued to the top. Below 1200px of
+          viewport height both resolve to their old values (h-screen, top-0). */}
+      <div
+        className="sticky flex h-screen max-h-[1200px] flex-col overflow-hidden"
+        style={{ top: 'max(0px, calc((100vh - 1200px) / 2))' }}
+      >
         <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-4 pt-14 sm:px-6 lg:py-10">
           {/* On lg+ the heading sits inside the pinned stage; below lg it scrolls
               above in normal flow (rendered separately, higher in the section). */}

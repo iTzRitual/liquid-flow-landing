@@ -77,10 +77,12 @@ export function Hero() {
           breathing room below, like Linear's hero. The outer shell starts at
           the page's own near-black (invisible seam at the top) and eases
           into a mid-grey floor toward the bottom, matching Linear's own
-          hero container. */}
+          hero container. At xl+ it's capped and centered so it stays a
+          Linear-like framed container instead of stretching full-bleed on
+          ultra-wide viewports. */}
       <div
         id="demo"
-        className="relative mt-16 overflow-hidden sm:mt-20 xl:mx-12 xl:rounded-3xl"
+        className="relative mt-16 overflow-hidden sm:mt-20 xl:mx-auto xl:w-[calc(100%-96px)] xl:max-w-[1360px] xl:rounded-3xl"
         style={{
           background:
             // Top-to-bottom: page black holds until the mock's vertical middle,
