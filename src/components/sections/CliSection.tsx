@@ -121,7 +121,7 @@ export function CliSection() {
           when the content is taller than the viewport it pins to the top with
           padding instead of clipping the heading off-screen. */}
       <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
-        <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-10 pt-20 sm:px-6 lg:py-10">
+        <div className="mx-auto my-auto w-full max-w-6xl px-4 pb-8 pt-16 sm:px-6 lg:py-10">
           {/* On lg+ the heading sits inside the pinned stage; below lg it scrolls
               above in normal flow (rendered separately, higher in the section). */}
           <div className="hidden lg:block">
@@ -131,9 +131,9 @@ export function CliSection() {
           {/* The terminal stays put in the centre; only the tip column swaps. */}
           <div
             ref={stageRef}
-            className="grid items-center gap-8 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14"
+            className="grid items-center gap-6 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14"
           >
-            <div className="relative min-h-[168px] sm:min-h-[208px]">
+            <div className="relative min-h-[184px] sm:min-h-[172px]">
               <AnimatePresence initial={false} custom={dirRef.current}>
                 <motion.div
                   key={stage}
@@ -172,7 +172,7 @@ function CliHeading({ heading, subtitle }: { heading: string; subtitle: string }
 
 function ProgressDots({ active, count }: { active: number; count: number }) {
   return (
-    <div className="mt-10 flex items-center justify-center gap-2" aria-hidden="true">
+    <div className="mt-6 flex items-center justify-center gap-2 lg:mt-10" aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
         <span
           key={i}

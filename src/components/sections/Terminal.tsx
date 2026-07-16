@@ -146,7 +146,7 @@ function logLines(lang: Lang): LogLine[] {
 
 function Rule() {
   return (
-    <div aria-hidden="true" className="select-none overflow-hidden whitespace-pre" style={{ color: C.divider }}>
+    <div aria-hidden="true" className="shrink-0 select-none overflow-hidden whitespace-pre" style={{ color: C.divider }}>
       {'─'.repeat(240)}
     </div>
   );
@@ -198,7 +198,7 @@ function Header({ lang, stage }: { lang: Lang; stage: number }) {
   const hasTemplate = stage >= 2;
   const hasConflicts = stage >= 3;
   return (
-    <div className="flex pl-1 pt-1">
+    <div className="flex shrink-0 pl-1 pt-1">
       <Banner />
       <div className="ml-4 flex min-w-0 flex-1 flex-col justify-between whitespace-pre sm:ml-6">
         <div className="overflow-hidden">
@@ -632,22 +632,27 @@ export function Terminal({
   const paletteOpen = ui.stage === 0 && !ui.settled && ui.typed.startsWith('/');
 
   return (
-    /* Below lg the stage is tight, so the window shows only its bottom part:
-       a fixed-height crop anchored to the content's end (input row, latest log,
-       overlays), with the top edge dissolving into the background via a mask
-       gradient — the titlebar may vanish under the fade, by design. On lg+ the
-       wrapper is inert and the full frame renders exactly as before. */
-    <div className="flex h-[clamp(160px,calc(100svh-390px),280px)] flex-col justify-end overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)] sm:h-[clamp(180px,calc(100svh-420px),420px)] lg:h-auto lg:overflow-visible lg:[mask-image:none]">
-      <div className="shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/60">
-        {/* macOS title bar */}
-        <div className="flex items-center gap-2 border-b border-white/5 bg-[#10151c] px-4 py-3">
+    /* Below lg the terminal height tracks the viewport (`100svh − stage chrome`)
+       so the whole window fits instead of being cropped: the header (banner +
+       logo) holds the top, the input/overlay holds the bottom, and the `flex-1`
+       LogPane between them compresses toward zero on short viewports. A short
+       fixed mask band dissolves just the titlebar/top edge into the background;
+       on the very shortest viewports the header's top dips into that fade — its
+       logo stays "at least a bit" visible — instead of being cropped away. On
+       lg+ the height is fixed (`h-480`) and the frame renders exactly as before. */
+    <div className="flex h-[clamp(232px,calc(100svh-352px),496px)] flex-col overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0,#000_64px)] sm:h-[clamp(248px,calc(100svh-340px),520px)] lg:h-auto lg:overflow-visible lg:[mask-image:none]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/60 lg:flex-none">
+        {/* macOS title bar — hidden below lg (where the frame is cropped into the
+            fade): there the app header/logo is the terminal's top edge and
+            dissolves straight into the background, with no chrome to overlap it. */}
+        <div className="hidden shrink-0 items-center gap-2 border-b border-white/5 bg-[#10151c] px-4 py-3 lg:flex">
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" aria-hidden="true" />
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" aria-hidden="true" />
           <span className="h-3 w-3 rounded-full bg-[#28c840]" aria-hidden="true" />
           <span className="ml-3 font-mono text-xs text-slate-500">liquidflow — zsh</span>
         </div>
 
-        <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
+        <div className="flex min-h-0 flex-1 flex-col justify-end gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
           <Header lang={lang} stage={ui.stage} />
           <Rule />
           {/* Log-line `layout` is disabled whenever an overlay is open: there the
@@ -673,7 +678,7 @@ export function Terminal({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
-                className="overflow-hidden"
+                className="shrink-0 overflow-hidden"
               >
                 <SignInForm lang={lang} />
               </motion.div>
@@ -685,7 +690,7 @@ export function Terminal({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
-                className="overflow-hidden"
+                className="shrink-0 overflow-hidden"
               >
                 <TemplatePicker lang={lang} />
               </motion.div>
@@ -697,7 +702,7 @@ export function Terminal({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
-                className="overflow-hidden"
+                className="shrink-0 overflow-hidden"
               >
                 <ConflictsOverlay lang={lang} />
               </motion.div>
@@ -709,7 +714,7 @@ export function Terminal({
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
-                className="overflow-hidden"
+                className="shrink-0 overflow-hidden"
               >
                 <GitOverlay lang={lang} />
               </motion.div>
@@ -721,7 +726,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
-                className="overflow-hidden"
+                className="shrink-0 overflow-hidden"
               >
                 <Rule />
                 {paletteOpen && <Palette lang={lang} />}
