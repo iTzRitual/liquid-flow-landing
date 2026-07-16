@@ -82,7 +82,7 @@ export function Hero() {
           ultra-wide viewports. */}
       <div
         id="demo"
-        className="relative mt-16 overflow-hidden sm:mt-20 xl:mx-auto xl:w-[calc(100%-96px)] xl:max-w-[1360px] xl:rounded-3xl"
+        className="relative mt-16 overflow-hidden sm:mt-20 xl:mx-auto xl:w-[calc(100%-96px)] xl:max-w-[1920px] xl:rounded-3xl"
         style={{
           background:
             // Top-to-bottom: page black holds until the mock's vertical middle,
