@@ -640,7 +640,7 @@ export function Terminal({
        on the very shortest viewports the header's top dips into that fade — its
        logo stays "at least a bit" visible — instead of being cropped away. On
        lg+ the height is fixed (`h-480`) and the frame renders exactly as before. */
-    <div className="flex h-[clamp(232px,calc(100svh-352px),496px)] flex-col overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0,#000_64px)] sm:h-[clamp(248px,calc(100svh-340px),520px)] lg:h-auto lg:overflow-visible lg:[mask-image:none]">
+    <div className="flex h-[clamp(200px,calc(100svh-372px),496px)] flex-col overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0,#000_44px)] sm:h-[clamp(216px,calc(100svh-300px),520px)] lg:h-auto lg:overflow-visible lg:[mask-image:none]">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/60 lg:flex-none">
         {/* macOS title bar — hidden below lg (where the frame is cropped into the
             fade): there the app header/logo is the terminal's top edge and
