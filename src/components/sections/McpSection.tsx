@@ -76,8 +76,11 @@ export function McpSection() {
   // A random scenario plays on each visit. Start at 0 (server and first client
   // render agree — no hydration mismatch), then pick a random one on mount.
   const [scenario, setScenario] = React.useState(0);
+  const [played, setPlayed] = React.useState<number[]>([]);
   React.useEffect(() => {
-    setScenario(Math.floor(Math.random() * SCENARIO_COUNT));
+    const first = Math.floor(Math.random() * SCENARIO_COUNT);
+    setScenario(first);
+    setPlayed([first]);
   }, []);
   const script = SCRIPTS[lang][scenario];
 
@@ -90,11 +93,18 @@ export function McpSection() {
   const [visible, setVisible] = React.useState(0);
   const [choiceId, setChoiceId] = React.useState<string | null>(null);
 
+  const isAppendingRef = React.useRef(false);
+
   // Restart the conversation when the scenario or language flips.
   React.useEffect(() => {
+    if (isAppendingRef.current) {
+      isAppendingRef.current = false;
+      return;
+    }
     setEvents(script.intro);
     setVisible(0);
     setChoiceId(null);
+    setPlayed([scenario]);
   }, [script]);
 
   const atDecision = events[visible - 1]?.kind === 'decision' && choiceId === null;
@@ -140,6 +150,38 @@ export function McpSection() {
   const shown = events.slice(0, visible).filter((e) => e.kind !== 'decision');
   // The newest tool call spins while the script is still advancing.
   const running = visible < events.length && !atDecision;
+
+  const isFinished = visible >= events.length && choiceId !== null;
+
+  const handleInputClick = React.useCallback(() => {
+    if (!isFinished) return;
+    isAppendingRef.current = true;
+
+    const available = Array.from({ length: SCENARIO_COUNT }, (_, i) => i).filter(
+      (idx) => !played.includes(idx)
+    );
+
+    let nextScenario: number;
+    let nextPlayed: number[];
+
+    if (available.length === 0) {
+      const resetAvailable = Array.from({ length: SCENARIO_COUNT }, (_, i) => i).filter(
+        (idx) => idx !== scenario
+      );
+      nextScenario = resetAvailable[Math.floor(Math.random() * resetAvailable.length)];
+      nextPlayed = [nextScenario];
+    } else {
+      nextScenario = available[Math.floor(Math.random() * available.length)];
+      nextPlayed = [...played, nextScenario];
+    }
+
+    setPlayed(nextPlayed);
+
+    const nextScript = SCRIPTS[lang][nextScenario];
+    setEvents((prev) => [...prev, ...nextScript.intro]);
+    setChoiceId(null);
+    setScenario(nextScenario);
+  }, [isFinished, scenario, played, lang]);
 
   return (
     <section id="mcp" className="relative border-t border-white/5 bg-night-950">
@@ -193,15 +235,47 @@ export function McpSection() {
             </AnimatePresence>
           </div>
 
-          {/* Inert composer, purely for the Linear-agent look */}
+          {/* Inert / Interactive composer */}
           <div className="border-t border-white/5 p-3">
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
-              <span className="flex-1 select-none text-sm text-ink-muted/60">{t.mcp.inputPlaceholder}</span>
-              <Paperclip className="h-4 w-4 text-ink-muted/50" aria-hidden="true" />
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
-                <ArrowUp className="h-3.5 w-3.5 text-ink-muted" aria-hidden="true" />
+            <motion.div
+              role={isFinished ? 'button' : undefined}
+              tabIndex={isFinished ? 0 : -1}
+              onClick={handleInputClick}
+              onKeyDown={(e) => {
+                if (isFinished && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleInputClick();
+                }
+              }}
+              whileHover={isFinished ? { scale: 1.01, borderColor: 'rgba(255, 255, 255, 0.3)' } : undefined}
+              whileTap={isFinished ? { scale: 0.99 } : undefined}
+              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all duration-300 select-none ${
+                isFinished
+                  ? 'cursor-pointer border-white/20 bg-white/[0.06] hover:bg-white/[0.08] focus:outline-none focus:ring-1 focus:ring-white/30'
+                  : 'border-white/10 bg-white/[0.03]'
+              }`}
+            >
+              <span
+                className={`flex-1 text-sm transition-colors duration-300 ${
+                  isFinished ? 'text-ink font-medium' : 'text-ink-muted/60'
+                }`}
+              >
+                {t.mcp.inputPlaceholder}
               </span>
-            </div>
+              <Paperclip
+                className={`h-4 w-4 transition-colors duration-300 ${
+                  isFinished ? 'text-ink-muted/80' : 'text-ink-muted/50'
+                }`}
+                aria-hidden="true"
+              />
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full transition-all duration-300 ${
+                  isFinished ? 'bg-ink text-night-950 scale-105 shadow-md shadow-white/10' : 'bg-white/10 text-ink-muted'
+                }`}
+              >
+                <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+            </motion.div>
           </div>
         </div>
       </div>
