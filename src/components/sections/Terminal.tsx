@@ -18,6 +18,7 @@ const C = {
   divider: '#82bbff', // Divider.jsx
   prompt: '#ff5a1f', // input '›' and git ahead '+N'
   cyan: '#56d4dd',
+  magenta: '#c678dd', // sign-in form border (Ink borderColor="magenta")
   green: '#4ade80',
   red: '#f87171',
   yellow: '#e5c07b',
@@ -74,7 +75,18 @@ function strings(lang: Lang) {
     templateLabel: pl ? 'Szablon:' : 'Template:',
     gitLabel: 'Git:',
     conflictsIndicator: pl ? '⚠ Konflikty: 2 (/conflicts)' : '⚠ Conflicts: 2 (/conflicts)',
+    disconnected: '~',
     placeholder: pl ? 'wpisz / aby zobaczyć komendy · /exit wyjście' : 'type / to see commands · /exit to quit',
+    // sign-in form (/connect → add new connection)
+    signInTitle: pl ? 'Zaloguj sklep' : 'Sign in to shop',
+    fieldName: pl ? 'Nazwa (A-Za-z0-9)' : 'Name (A-Za-z0-9)',
+    fieldUrl: 'URL',
+    fieldPassword: pl ? 'Hasło webmastera' : 'Webmaster password',
+    fieldSave: pl ? 'Zapisz hasło?' : 'Save password?',
+    formHelp: pl ? 'Enter dalej · Esc anuluj' : 'Enter next · Esc cancel',
+    // template picker
+    selectTemplate: pl ? 'Wybierz szablon' : 'Select template',
+    lockedHint: pl ? '🔒 zablokowany' : '🔒 locked',
     commands: [
       ['/connect', pl ? 'połącz ze sklepem (lista + dodaj nowy)' : 'connect to a shop (list + add new)'],
       ['/templates', pl ? 'wybierz szablon' : 'select template'],
@@ -116,16 +128,17 @@ type LogLine = { ts: string; text: string; color: string; stage: number };
 function logLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
   return [
-    { ts: '12:00:01', text: pl ? 'Sesja rozpoczęta' : 'Session started', color: C.dim, stage: 0 },
-    { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green, stage: 0 },
-    { ts: '12:00:03', text: pl ? 'Wybrano szablon: Topaz [42]' : 'Template selected: Topaz [42]', color: C.text, stage: 0 },
-    { ts: '12:00:04', text: pl ? 'Pobrano 128 plików szablonu' : 'Downloaded 128 template files', color: C.text, stage: 0 },
-    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text, stage: 1 },
-    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim, stage: 1 },
-    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green, stage: 1 },
-    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text, stage: 1 },
-    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green, stage: 1 },
-    { ts: '12:04:10', text: 'Auto-commit → liquidflow/wip', color: C.dim, stage: 1 },
+    // stage 1: signed in (header gains the Shop row)
+    { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green, stage: 1 },
+    // stage 2: template selected → files pulled → hot-reload editing
+    { ts: '12:00:05', text: pl ? 'Wybrano szablon: Topaz [42]' : 'Template selected: Topaz [42]', color: C.green, stage: 2 },
+    { ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text, stage: 2 },
+    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text, stage: 2 },
+    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim, stage: 2 },
+    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green, stage: 2 },
+    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text, stage: 2 },
+    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green, stage: 2 },
+    { ts: '12:04:10', text: 'Auto-commit → liquidflow/wip', color: C.dim, stage: 2 },
   ];
 }
 
@@ -159,10 +172,31 @@ function Banner() {
   );
 }
 
-function Header({ lang }: { lang: Lang }) {
+/* Header rows appear as the session progresses, exactly like the real app's
+ * StatusBar: disconnected shows only the title + a dim `~`; /connect adds the
+ * Shop row (stage ≥ 1); picking a template adds Template + Git (stage ≥ 2);
+ * conflicts surface their indicator (stage ≥ 3). The banner's 6 rows fix the
+ * header height, so rows filling in never shift the log pane below. */
+function HeaderRow({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: EASE_OUT }}
+      className="overflow-hidden text-ellipsis whitespace-pre"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function Header({ lang, stage }: { lang: Lang; stage: number }) {
   const s = strings(lang);
   const labelW = Math.max(s.shopLabel.length, s.templateLabel.length, s.gitLabel.length) + 1;
   const pad = (x: string) => x.padEnd(labelW);
+  const hasShop = stage >= 1;
+  const hasTemplate = stage >= 2;
+  const hasConflicts = stage >= 3;
   return (
     <div className="flex pl-1 pt-1">
       <Banner />
@@ -171,28 +205,44 @@ function Header({ lang }: { lang: Lang }) {
           <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.title }}>
             Liquid Flow CLI 0.9.179
           </div>
-          <div className="overflow-hidden text-ellipsis whitespace-pre">
-            <span style={{ color: C.dim }}>{pad(s.shopLabel)}</span>
-            <span style={{ color: C.green }}>● Ogródek</span>
-            <span style={{ color: C.dim }}>  https://ogrodek.esklep.pl</span>
-          </div>
-          <div className="overflow-hidden text-ellipsis whitespace-pre">
-            <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
-            <span style={{ color: C.cyan }}>Topaz</span>
-            <span style={{ color: C.dim }}> [42]</span>
-          </div>
-          <div className="overflow-hidden text-ellipsis whitespace-pre">
-            <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
-            <span style={{ color: C.cyan }}>liquidflow/wip</span>
-            <span style={{ color: C.prompt }}> +2</span>
-            <span style={{ color: C.dim }}> · </span>
-            <span style={{ color: C.green }}>commit ✓ </span>
-            <span style={{ color: C.green }}>push ✓</span>
-          </div>
+          {hasShop ? (
+            <HeaderRow>
+              <span style={{ color: C.dim }}>{pad(s.shopLabel)}</span>
+              <span style={{ color: C.green }}>● Ogródek</span>
+              <span style={{ color: C.dim }}>  https://ogrodek.esklep.pl</span>
+            </HeaderRow>
+          ) : (
+            <div className="whitespace-pre" style={{ color: C.dim }}>{s.disconnected}</div>
+          )}
+          {hasTemplate && (
+            <HeaderRow>
+              <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
+              <span style={{ color: C.cyan }}>Topaz</span>
+              <span style={{ color: C.dim }}> [42]</span>
+            </HeaderRow>
+          )}
+          {hasTemplate && (
+            <HeaderRow>
+              <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
+              <span style={{ color: C.cyan }}>liquidflow/wip</span>
+              <span style={{ color: C.prompt }}> +2</span>
+              <span style={{ color: C.dim }}> · </span>
+              <span style={{ color: C.green }}>commit ✓ </span>
+              <span style={{ color: C.green }}>push ✓</span>
+            </HeaderRow>
+          )}
         </div>
-        <div className="overflow-hidden text-ellipsis whitespace-pre text-right" style={{ color: C.red }}>
-          {s.conflictsIndicator}
-        </div>
+        {hasConflicts && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: EASE_OUT }}
+            className="overflow-hidden text-ellipsis whitespace-pre text-right"
+            style={{ color: C.red }}
+          >
+            {s.conflictsIndicator}
+          </motion.div>
+        )}
       </div>
     </div>
   );
@@ -280,6 +330,76 @@ function OverlayFrame({ title, children }: { title: string; children: React.Reac
       </div>
       {children}
     </div>
+  );
+}
+
+/* Sign-in form (Form.jsx: magenta round border). Shown mid-fill — name + URL
+ * already entered (✓), webmaster password being typed (›), save-password pending. */
+function SignInForm({ lang }: { lang: Lang }) {
+  const s = strings(lang);
+  const label = (mark: string, text: string, dim: boolean) => (
+    <span style={{ color: dim ? C.dim : C.text }}>
+      {mark}
+      {text}:{' '}
+    </span>
+  );
+  return (
+    <div className="rounded-md border px-2 py-1" style={{ borderColor: C.magenta }}>
+      <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.magenta }}>
+        {s.signInTitle}
+      </div>
+      <div className="overflow-hidden text-ellipsis whitespace-pre">
+        {label('✓ ', s.fieldName, true)}
+        <span style={{ color: C.dim }}>Ogródek</span>
+      </div>
+      <div className="overflow-hidden text-ellipsis whitespace-pre">
+        {label('✓ ', s.fieldUrl, true)}
+        <span style={{ color: C.dim }}>https://ogrodek.esklep.pl</span>
+      </div>
+      <div className="overflow-hidden text-ellipsis whitespace-pre">
+        {label('› ', s.fieldPassword, false)}
+        <span style={{ color: C.dim }}>••••</span>
+        <motion.span
+          aria-hidden="true"
+          animate={{ opacity: [1, 1, 0, 0] }}
+          transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
+          className="text-white"
+        >
+          ▍
+        </motion.span>
+      </div>
+      <div className="overflow-hidden text-ellipsis whitespace-pre">
+        {label('  ', s.fieldSave, true)}
+        <span style={{ color: C.dim }}>…</span>
+      </div>
+      <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
+        {s.formHelp}
+      </div>
+    </div>
+  );
+}
+
+/* Template picker (Picker.jsx: cyan round border), first row selected. */
+function TemplatePicker({ lang }: { lang: Lang }) {
+  const s = strings(lang);
+  const row = (sel: boolean, name: string, hint?: string) => (
+    <div className="overflow-hidden text-ellipsis whitespace-pre">
+      <span style={sel ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.text }}>
+        {sel ? '› ' : '  '}
+        {name}
+      </span>
+      {hint && <span style={{ color: sel ? '#0b0f14' : C.dim }}>{'  '}{hint}</span>}
+    </div>
+  );
+  return (
+    <OverlayFrame title={s.selectTemplate}>
+      {row(true, 'Topaz [42]')}
+      {row(false, 'Szafir [39]')}
+      {row(false, 'Bursztyn [17]', s.lockedHint)}
+      <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
+        {s.pickerHelp}
+      </div>
+    </OverlayFrame>
   );
 }
 
@@ -389,11 +509,16 @@ const REVEAL_MS = 440; // gap between successive log lines printing in (paced to
 
 type Ui = { stage: number; typed: string; settled: boolean };
 
-/** Command typed into the prompt to reach `stage` (empty = nothing typed). */
-const stageCmd = (stage: number) => (stage === 2 ? '/conflicts' : stage === 3 ? '/git' : '');
+/** Which overlay is a stage's settled bottom zone (null → the plain input row). */
+type OverlayKind = 'form' | 'templates' | 'conflicts' | 'git';
+const overlayKindFor = (stage: number): OverlayKind | null =>
+  stage === 0 ? 'form' : stage === 1 ? 'templates' : stage === 3 ? 'conflicts' : stage === 4 ? 'git' : null;
+
+/** Command typed into the prompt on the way into a stage (empty = nothing typed). */
+const stageCmd = (stage: number) => (stage === 3 ? '/conflicts' : stage === 4 ? '/git' : '');
 
 export function Terminal({ stage, lang, animate = true }: { stage: number; lang: Lang; animate?: boolean }) {
-  const [ui, setUi] = React.useState<Ui>({ stage, typed: stage === 0 ? '/' : '', settled: true });
+  const [ui, setUi] = React.useState<Ui>({ stage, typed: '', settled: true });
   const prevRef = React.useRef(stage);
 
   React.useEffect(() => {
@@ -402,7 +527,7 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
     const cmd = stageCmd(stage);
     // Backwards, reduced motion, or a stage without a command → settle instantly.
     if (!animate || stage <= prev || !cmd) {
-      setUi({ stage, typed: stage === 0 ? '/' : '', settled: true });
+      setUi({ stage, typed: '', settled: true });
       return;
     }
     // Forward into /conflicts or /git: type the command, then open the overlay —
@@ -451,10 +576,13 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
   }, [ui.stage, animate, lines]);
 
   const visibleLines = lines.slice(0, shown);
-  // Stage-1 lines fade in as they print (scrolling forward).
-  const animateFrom = animate && ui.stage >= 1 ? lines.filter((l) => l.stage === 0).length : visibleLines.length;
-  const overlayOpen = ui.settled && ui.stage >= 2;
-  const paletteOpen = ui.stage === 0;
+  // Every revealed line fades in as it prints (no pre-connected backlog exists).
+  const animateFrom = animate ? 0 : visibleLines.length;
+  const overlayKind = overlayKindFor(ui.stage);
+  const overlayOpen = ui.settled && overlayKind !== null;
+  // The slash palette only shows while a command is being typed at the cold start
+  // (stage-0 intro); every settled stage shows its overlay or the bare input row.
+  const paletteOpen = ui.stage === 0 && !ui.settled;
 
   return (
     /* Below lg the stage is tight, so the window shows only its bottom part:
@@ -473,25 +601,49 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
         </div>
 
         <div className="flex h-[min(440px,55svh)] flex-col gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:h-[min(480px,55svh)] sm:px-3 sm:text-[12.5px] lg:h-[480px]">
-          <Header lang={lang} />
+          <Header lang={lang} stage={ui.stage} />
           <Rule />
-          {/* Log-line `layout` is disabled once overlays are in play (stage ≥ 2):
-              there, the bottom zone's height morph owns all vertical movement —
-              the logs ride it via flex. Letting the lines self-animate too would
-              double up and reintroduce the gap. `layout` stays on for stage 0→1
-              line-printing, which the height morph doesn't cover. */}
+          {/* Log-line `layout` is disabled whenever an overlay is open: there the
+              bottom zone's height morph owns all vertical movement and the logs
+              ride it via flex. Letting the lines self-animate too would double up
+              and reintroduce the gap. `layout` stays on at the input stage (the
+              hot-reload lines printing), which the height morph doesn't cover. */}
           <LogPane
             lines={visibleLines}
             dim={overlayOpen}
             animateFrom={animateFrom}
-            animate={animate && ui.stage < 2}
+            animate={animate && !overlayOpen}
           />
           {/* One persistent bottom zone. Whatever is current (input row, or a
               conflicts/git overlay) collapses to/expands from height 0, so the
               flex-1 log pane is pushed and pulled at exactly the panel's rate —
               logs stay glued to its top edge with no gap and no jump. */}
           <AnimatePresence initial={false}>
-            {overlayOpen && ui.stage === 2 && (
+            {overlayOpen && overlayKind === 'form' && (
+              <motion.div
+                key="form"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="overflow-hidden"
+              >
+                <SignInForm lang={lang} />
+              </motion.div>
+            )}
+            {overlayOpen && overlayKind === 'templates' && (
+              <motion.div
+                key="templates"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="overflow-hidden"
+              >
+                <TemplatePicker lang={lang} />
+              </motion.div>
+            )}
+            {overlayOpen && overlayKind === 'conflicts' && (
               <motion.div
                 key="conflicts"
                 initial={{ height: 0, opacity: 0 }}
@@ -503,7 +655,7 @@ export function Terminal({ stage, lang, animate = true }: { stage: number; lang:
                 <ConflictsOverlay lang={lang} />
               </motion.div>
             )}
-            {overlayOpen && ui.stage === 3 && (
+            {overlayOpen && overlayKind === 'git' && (
               <motion.div
                 key="git"
                 initial={{ height: 0, opacity: 0 }}
