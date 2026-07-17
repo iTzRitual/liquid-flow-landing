@@ -1,6 +1,6 @@
 'use client';
 
-import { Github } from 'lucide-react';
+import { Github, Mail } from 'lucide-react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { GITHUB_URL } from './Navbar';
 
@@ -15,15 +15,24 @@ export function Footer() {
             <span className="font-black text-white">Liquid</span>
             <span className="font-black text-brand">Flow</span>
           </div>
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink"
-          >
-            <Github className="h-4 w-4" aria-hidden="true" />
-            iTzRitual/liquid-flow
-          </a>
+          <div className="flex items-center gap-5">
+            <a
+              href="mailto:n.mokrzycki@icloud.com"
+              className="flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              {t.footer.contact}
+            </a>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              <Github className="h-4 w-4" aria-hidden="true" />
+              iTzRitual/liquid-flow
+            </a>
+          </div>
         </div>
         <p className="text-sm text-ink-muted">{t.footer.tagline}</p>
         <p className="text-xs leading-relaxed text-ink-muted/60">{t.footer.disclaimer}</p>

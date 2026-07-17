@@ -132,8 +132,16 @@ const pl = {
           description: 'Wybierz issue oznaczone „good first issue” i zrób z nami swój pierwszy commit.',
         },
       ],
+      collab: {
+        heading: 'Potrzebujesz czegoś podobnego?',
+        pitch:
+          'Jestem Natan Mokrzycki, autor Liquid Flow. Buduję na zamówienie aplikacje webowe, dedykowane narzędzia i integracje — jeśli szukasz kogoś, kto zrobi to porządnie, odezwij się.',
+        ctaEmail: 'Napisz do mnie',
+        ctaLinkedin: 'LinkedIn',
+      },
     },
     footer: {
+      contact: 'Kontakt',
       tagline: 'Open source, MIT. Zbudowane z frustracji, z miłości do macOS.',
       disclaimer:
         'Liquid Flow to niezależny projekt open source. Nie jest powiązany z Comarch S.A. „Comarch" i „Comarch e-Sklep" są znakami towarowymi ich właścicieli.',
@@ -274,8 +282,16 @@ const en: Dictionary = {
           description: 'Pick an issue labeled "good first issue" and make your first commit with us.',
         },
       ],
+      collab: {
+        heading: 'Need something like this?',
+        pitch:
+          "I'm Natan Mokrzycki, the author of Liquid Flow. I build web apps, bespoke tools and integrations on commission — if you need someone who does it properly, get in touch.",
+        ctaEmail: 'Get in touch',
+        ctaLinkedin: 'LinkedIn',
+      },
     },
     footer: {
+      contact: 'Contact',
       tagline: 'Open source, MIT. Built out of frustration, with love for macOS.',
       disclaimer:
         'Liquid Flow is an independent open-source project. It is not affiliated with Comarch S.A. "Comarch" and "Comarch e-Sklep" are trademarks of their respective owners.',

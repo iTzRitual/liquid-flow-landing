@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, useInView, useReducedMotion } from 'motion/react';
-import { ArrowUpRight, Bug, Sparkles, Star } from 'lucide-react';
+import { ArrowUpRight, Bug, Mail, Sparkles, Star } from 'lucide-react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { GITHUB_URL } from '../Navbar';
 
@@ -12,6 +12,9 @@ const CARDS = [
   { href: `${GITHUB_URL}/issues`, icon: Bug },
   { href: `${GITHUB_URL}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22`, icon: Sparkles },
 ] as const;
+
+const CONTACT_EMAIL = 'n.mokrzycki@icloud.com';
+const LINKEDIN_URL = 'https://www.linkedin.com/in/natanmokrzycki/';
 
 export function OpenSourceSection() {
   const { t } = useLang();
@@ -78,6 +81,39 @@ export function OpenSourceSection() {
             })}
           </div>
         </div>
+
+        {/* Collaboration band — commissioned work, first person singular (the
+            author speaking), unlike the plural contribution copy above. */}
+        <motion.div
+          {...fadeUp(0.2)}
+          className="mt-16 flex flex-col items-start justify-between gap-6 rounded-2xl border border-white/10 bg-gradient-to-br from-brand/[0.08] via-night-900 to-night-900 p-8 sm:flex-row sm:items-center"
+        >
+          <div>
+            <h3 className="text-xl font-semibold tracking-tight text-ink">{t.openSource.collab.heading}</h3>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">{t.openSource.collab.pitch}</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-night-950 transition-[background-color,transform] hover:bg-white active:scale-[0.97]"
+            >
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              {t.openSource.collab.ctaEmail}
+            </a>
+            <a
+              href={LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              {t.openSource.collab.ctaLinkedin}
+              <ArrowUpRight
+                className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
