@@ -277,13 +277,15 @@ function LogPane({
           // lines when the log block regrows (new lines append) or the pane
           // shrinks under an overlay — so the "scroll" glides instead of jumping.
           // The layout tween carries its own timing with NO delay, otherwise it
-          // would inherit the opacity stagger below and fall apart line-by-line.
+          // would inherit the opacity delay below and fall apart line-by-line.
+          // "Make room, then reveal": the shift finishes (0.25s) before the new
+          // line's fade-in starts (delayed 0.2s), instead of both racing at once.
           layout={animate ? 'position' : undefined}
           initial={i >= animateFrom ? { opacity: 0 } : false}
           animate={{ opacity: 1 }}
           transition={{
-            duration: 0.3,
-            layout: { duration: 0.5, ease: EASE_OUT },
+            opacity: { duration: 0.2, delay: 0.2 },
+            layout: { duration: 0.25, ease: EASE_OUT },
           }}
           className="overflow-hidden text-ellipsis whitespace-pre"
           style={{ color: l.color }}
@@ -669,14 +671,19 @@ export function Terminal({
           {/* One persistent bottom zone. Whatever is current (input row, or a
               conflicts/git overlay) collapses to/expands from height 0, so the
               flex-1 log pane is pushed and pulled at exactly the panel's rate —
-              logs stay glued to its top edge with no gap and no jump. */}
+              logs stay glued to its top edge with no gap and no jump.
+              Height-only (no opacity): animating opacity alongside height
+              promotes this element to its own compositing layer, and tearing
+              that down when the animation ends re-rounds the sub-pixel height
+              the log pane was tracking, snapping it ~1px. The reveal still
+              reads fine since the pane is clipped by overflow-hidden anyway. */}
           <AnimatePresence initial={false}>
             {overlayOpen && overlayKind === 'form' && (
               <motion.div
                 key="form"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
@@ -686,9 +693,9 @@ export function Terminal({
             {overlayOpen && overlayKind === 'templates' && (
               <motion.div
                 key="templates"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
@@ -698,9 +705,9 @@ export function Terminal({
             {overlayOpen && overlayKind === 'conflicts' && (
               <motion.div
                 key="conflicts"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
@@ -710,9 +717,9 @@ export function Terminal({
             {overlayOpen && overlayKind === 'git' && (
               <motion.div
                 key="git"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
