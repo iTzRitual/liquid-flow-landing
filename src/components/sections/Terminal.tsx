@@ -261,11 +261,13 @@ function LogPane({
   dim,
   animateFrom,
   animate,
+  shift,
 }: {
   lines: LogLine[];
   dim: boolean;
   animateFrom: number;
   animate: boolean;
+  shift: boolean;
 }) {
   return (
     <div
@@ -282,17 +284,19 @@ function LogPane({
           // into place while the existing lines FLIP up via `layout="position"`.
           // y and layout share the SAME timing with NO delay, so the block
           // glides up as one body and the new line emerges from under the
-          // pane's clipped bottom edge. Opacity runs linear and a touch longer:
-          // the rise is spent mostly behind the clip, so a fade that ends with
-          // the rise is invisible — a line entering an EMPTY pane (stage 1's
-          // first print, dimmed, no block gliding above it) would read as a
-          // pop. The fade tail after the rise is what keeps it perceptible.
-          // Entering lines have no prior layout snapshot, so their layout anim
-          // is a no-op — only the y tween moves them; nothing double-applies.
+          // pane's clipped bottom edge. Entering lines have no prior layout
+          // snapshot, so their layout anim is a no-op — only the y tween moves
+          // them; nothing double-applies.
+          // `layout` must never toggle per-render: Motion registers projection
+          // only at MOUNT, so a line mounted with layout off (under an open
+          // overlay) would be excluded from every later FLIP and teleport
+          // instead of gliding. When an overlay's height morph owns the
+          // vertical movement, the FLIP is suppressed via a zero layout
+          // duration instead of dropping the prop.
           layout={animate ? 'position' : undefined}
           initial={i >= animateFrom ? { opacity: 0, y: '100%' } : false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: EASE_OUT, opacity: { duration: 0.35, ease: 'linear' } }}
+          transition={{ duration: 0.25, ease: EASE_OUT, layout: shift ? undefined : { duration: 0 } }}
           className="overflow-hidden text-ellipsis whitespace-pre"
           style={{ color: l.color }}
         >
@@ -669,16 +673,20 @@ export function Terminal({
         <div className="flex min-h-0 flex-1 flex-col justify-end px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
           <Header lang={lang} stage={ui.stage} />
           <Rule className="my-px" />
-          {/* Log-line `layout` is disabled whenever an overlay is open: there the
-              bottom zone's height morph owns all vertical movement and the logs
-              ride it via flex. Letting the lines self-animate too would double up
-              and reintroduce the gap. `layout` stays on at the input stage (the
-              hot-reload lines printing), which the height morph doesn't cover. */}
+          {/* Log-line FLIP is suppressed (zero-duration layout via `shift`)
+              whenever an overlay is open: there the bottom zone's height morph
+              owns all vertical movement and the logs ride it via flex. Letting
+              the lines self-animate too would double up and reintroduce the
+              gap. The `layout` prop itself stays on for every line's whole
+              life (see the mount-registration constraint in LogPane); the FLIP
+              runs at the input stage (the hot-reload lines printing), which
+              the height morph doesn't cover. */}
           <LogPane
             lines={visibleLines}
             dim={overlayOpen}
             animateFrom={animateFrom}
-            animate={animate && !overlayOpen}
+            animate={animate}
+            shift={!overlayOpen}
           />
           {/* One persistent bottom zone. Whatever is current (input row, or a
               conflicts/git overlay) collapses to/expands from height 0, so the
