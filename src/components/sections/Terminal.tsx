@@ -280,15 +280,19 @@ function LogPane({
           // Unified scroll: a new line starts one line-height below its slot
           // (y '100%' — tracks the fractional mobile metrics too) and rides up
           // into place while the existing lines FLIP up via `layout="position"`.
-          // All channels (opacity, y, layout) share the SAME timing with NO
-          // delay, so the block glides up as one body and the new line emerges
-          // from under the pane's clipped bottom edge. Entering lines have no
-          // prior layout snapshot, so their layout anim is a no-op — only the
-          // y tween moves them; nothing double-applies.
+          // y and layout share the SAME timing with NO delay, so the block
+          // glides up as one body and the new line emerges from under the
+          // pane's clipped bottom edge. Opacity runs linear and a touch longer:
+          // the rise is spent mostly behind the clip, so a fade that ends with
+          // the rise is invisible — a line entering an EMPTY pane (stage 1's
+          // first print, dimmed, no block gliding above it) would read as a
+          // pop. The fade tail after the rise is what keeps it perceptible.
+          // Entering lines have no prior layout snapshot, so their layout anim
+          // is a no-op — only the y tween moves them; nothing double-applies.
           layout={animate ? 'position' : undefined}
           initial={i >= animateFrom ? { opacity: 0, y: '100%' } : false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: EASE_OUT }}
+          transition={{ duration: 0.25, ease: EASE_OUT, opacity: { duration: 0.35, ease: 'linear' } }}
           className="overflow-hidden text-ellipsis whitespace-pre"
           style={{ color: l.color }}
         >
