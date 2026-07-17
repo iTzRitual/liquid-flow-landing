@@ -208,6 +208,27 @@ export function GetStartedSection() {
   const inView = useInView(contentRef, { once: true, amount: 0.15 });
   const [tab, setTab] = React.useState<Tab>('desktop');
 
+  /* The tab panels differ in height; animating the wrapper's measured height
+   * lets the Open Source section below glide instead of jumping on a switch.
+   * 'auto' until the first measurement so SSR/no-JS output is never clamped.
+   * A ResizeObserver (not a per-switch measure) also tracks late shifts —
+   * font loads, viewport resizes — so the settled height never clips.
+   * Deliberately NOT the `layout` prop: layout-FLIP would scale-distort the
+   * step content, and this codebase has a known mount-registration pitfall. */
+  const [panelHeight, setPanelHeight] = React.useState<number | 'auto'>('auto');
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      // ceil: a fractional height rounded down would clip the last line.
+      setPanelHeight(Math.ceil(el.getBoundingClientRect().height));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const fadeUp = (delay: number) => {
     const hidden = { opacity: 0, y: 16, filter: 'blur(8px)' } as const;
     const visible = { opacity: 1, y: 0, filter: 'blur(0px)' } as const;
@@ -235,51 +256,58 @@ export function GetStartedSection() {
             labels={{ desktop: t.getStarted.tabDesktop, cli: t.getStarted.tabCli }}
           />
 
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={tab}
-              role="tabpanel"
-              id={`get-started-panel-${tab}`}
-              aria-labelledby={`get-started-tab-${tab}`}
-              initial={reduceMotion ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={reduceMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
-              transition={{ duration: 0.25, ease: EASE_OUT }}
-              className="mt-10"
-            >
-              <ol className="space-y-8">
-                {steps.map((step, i) => (
-                  <li key={step.title} className="flex gap-4">
-                    <span className="mt-0.5 flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-full border border-white/10 font-mono text-xs text-ink-muted">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-ink">{step.title}</h3>
-                      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-                        <InlineCode text={step.body} />
-                      </p>
-                      {/* A download is not a terminal action — the packaged app
-                          gets a split button; only the CLI keeps the terminal. */}
-                      {tab === 'desktop' && i === 0 && <DownloadMenu />}
-                      {step.code?.map((line) => (
-                        <CommandSnippet
-                          key={line}
-                          line={line}
-                          copyLabel={t.getStarted.copyLabel}
-                          copiedLabel={t.getStarted.copiedLabel}
-                        />
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              {/* Node/Git only matter for the npm-installed CLI — the packaged
-                  desktop app bundles its runtime. */}
-              {tab === 'cli' && (
-                <p className="mt-8 text-center text-xs text-ink-muted/70">{t.getStarted.requirements}</p>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            animate={{ height: panelHeight }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.3, ease: EASE_OUT }}
+            className="mt-10 overflow-hidden"
+          >
+            <div ref={panelRef}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={tab}
+                  role="tabpanel"
+                  id={`get-started-panel-${tab}`}
+                  aria-labelledby={`get-started-tab-${tab}`}
+                  initial={reduceMotion ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={reduceMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.25, ease: EASE_OUT }}
+                >
+                  <ol className="space-y-8">
+                    {steps.map((step, i) => (
+                      <li key={step.title} className="flex gap-4">
+                        <span className="mt-0.5 flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-full border border-white/10 font-mono text-xs text-ink-muted">
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-medium text-ink">{step.title}</h3>
+                          <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
+                            <InlineCode text={step.body} />
+                          </p>
+                          {/* A download is not a terminal action — the packaged app
+                              gets a split button; only the CLI keeps the terminal. */}
+                          {tab === 'desktop' && i === 0 && <DownloadMenu />}
+                          {step.code?.map((line) => (
+                            <CommandSnippet
+                              key={line}
+                              line={line}
+                              copyLabel={t.getStarted.copyLabel}
+                              copiedLabel={t.getStarted.copiedLabel}
+                            />
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                  {/* Node/Git only matter for the npm-installed CLI — the packaged
+                      desktop app bundles its runtime. */}
+                  {tab === 'cli' && (
+                    <p className="mt-8 text-center text-xs text-ink-muted/70">{t.getStarted.requirements}</p>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
