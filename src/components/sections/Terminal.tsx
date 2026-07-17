@@ -144,9 +144,13 @@ function logLines(lang: Lang): LogLine[] {
 
 /* — building blocks — */
 
-function Rule() {
+function Rule({ className = '' }: { className?: string }) {
   return (
-    <div aria-hidden="true" className="shrink-0 select-none overflow-hidden whitespace-pre" style={{ color: C.divider }}>
+    <div
+      aria-hidden="true"
+      className={`shrink-0 select-none overflow-hidden whitespace-pre ${className}`}
+      style={{ color: C.divider }}
+    >
       {'─'.repeat(240)}
     </div>
   );
@@ -273,20 +277,18 @@ function LogPane({
       {lines.map((l, i) => (
         <motion.div
           key={i}
-          // `layout="position"` animates the vertical shift of already-visible
-          // lines when the log block regrows (new lines append) or the pane
-          // shrinks under an overlay — so the "scroll" glides instead of jumping.
-          // The layout tween carries its own timing with NO delay, otherwise it
-          // would inherit the opacity delay below and fall apart line-by-line.
-          // "Make room, then reveal": the shift finishes (0.25s) before the new
-          // line's fade-in starts (delayed 0.2s), instead of both racing at once.
+          // Unified scroll: a new line starts one line-height below its slot
+          // (y '100%' — tracks the fractional mobile metrics too) and rides up
+          // into place while the existing lines FLIP up via `layout="position"`.
+          // All channels (opacity, y, layout) share the SAME timing with NO
+          // delay, so the block glides up as one body and the new line emerges
+          // from under the pane's clipped bottom edge. Entering lines have no
+          // prior layout snapshot, so their layout anim is a no-op — only the
+          // y tween moves them; nothing double-applies.
           layout={animate ? 'position' : undefined}
-          initial={i >= animateFrom ? { opacity: 0 } : false}
-          animate={{ opacity: 1 }}
-          transition={{
-            opacity: { duration: 0.2, delay: 0.2 },
-            layout: { duration: 0.25, ease: EASE_OUT },
-          }}
+          initial={i >= animateFrom ? { opacity: 0, y: '100%' } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: EASE_OUT }}
           className="overflow-hidden text-ellipsis whitespace-pre"
           style={{ color: l.color }}
         >
@@ -654,9 +656,15 @@ export function Terminal({
           <span className="ml-3 font-mono text-xs text-slate-500">liquidflow — zsh</span>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col justify-end gap-px px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
+        {/* No `gap-*` here (or on any ancestor of the bottom zone): a flex gap
+            counts mounted children, so during the bottom-zone crossfade the
+            exiting element adds an extra 1px gap that vanishes on unmount and
+            snaps the bottom-anchored logs 1px down. The 1px rhythm lives on the
+            children instead (Rule my-px, pt-px inside each animated wrapper),
+            where it collapses together with the exit's height. */}
+        <div className="flex min-h-0 flex-1 flex-col justify-end px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
           <Header lang={lang} stage={ui.stage} />
-          <Rule />
+          <Rule className="my-px" />
           {/* Log-line `layout` is disabled whenever an overlay is open: there the
               bottom zone's height morph owns all vertical movement and the logs
               ride it via flex. Letting the lines self-animate too would double up
@@ -672,11 +680,11 @@ export function Terminal({
               conflicts/git overlay) collapses to/expands from height 0, so the
               flex-1 log pane is pushed and pulled at exactly the panel's rate —
               logs stay glued to its top edge with no gap and no jump.
-              Height-only (no opacity): animating opacity alongside height
-              promotes this element to its own compositing layer, and tearing
-              that down when the animation ends re-rounds the sub-pixel height
-              the log pane was tracking, snapping it ~1px. The reveal still
-              reads fine since the pane is clipped by overflow-hidden anyway. */}
+              Height-only (no opacity fade) — the pane is clipped by
+              overflow-hidden anyway. Each wrapper's inner pt-px is the 1px
+              spacing toward the log pane: it sits INSIDE the measured auto
+              height, so it grows/collapses with the morph instead of living on
+              a container gap that changes with the mounted-child count. */}
           <AnimatePresence initial={false}>
             {overlayOpen && overlayKind === 'form' && (
               <motion.div
@@ -687,7 +695,9 @@ export function Terminal({
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
-                <SignInForm lang={lang} />
+                <div className="pt-px">
+                  <SignInForm lang={lang} />
+                </div>
               </motion.div>
             )}
             {overlayOpen && overlayKind === 'templates' && (
@@ -699,7 +709,9 @@ export function Terminal({
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
-                <TemplatePicker lang={lang} />
+                <div className="pt-px">
+                  <TemplatePicker lang={lang} />
+                </div>
               </motion.div>
             )}
             {overlayOpen && overlayKind === 'conflicts' && (
@@ -711,7 +723,9 @@ export function Terminal({
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
-                <ConflictsOverlay lang={lang} />
+                <div className="pt-px">
+                  <ConflictsOverlay lang={lang} />
+                </div>
               </motion.div>
             )}
             {overlayOpen && overlayKind === 'git' && (
@@ -723,7 +737,9 @@ export function Terminal({
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
-                <GitOverlay lang={lang} />
+                <div className="pt-px">
+                  <GitOverlay lang={lang} />
+                </div>
               </motion.div>
             )}
             {!overlayOpen && (
@@ -735,9 +751,11 @@ export function Terminal({
                 transition={{ duration: 0.5, ease: EASE_OUT }}
                 className="shrink-0 overflow-hidden"
               >
-                <Rule />
-                {paletteOpen && <Palette lang={lang} />}
-                <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
+                <div className="pt-px">
+                  <Rule />
+                  {paletteOpen && <Palette lang={lang} />}
+                  <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
