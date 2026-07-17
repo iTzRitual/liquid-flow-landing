@@ -90,7 +90,7 @@ const pl = {
         },
         {
           title: 'Dobre na początek',
-          description: 'Wybierz issue oznaczone „good first issue" i zrób swój pierwszy commit.',
+          description: 'Wybierz issue oznaczone „good first issue” i zrób swój pierwszy commit.',
         },
         {
           title: 'Zostaw gwiazdkę',
