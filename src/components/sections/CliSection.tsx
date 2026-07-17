@@ -49,7 +49,9 @@ const VH_PER_STAGE = 120;
  * left while the next one rides in from the right — simultaneously (both share
  * a single grid cell), so there is never an empty in-between state. Stacking in
  * a grid rather than absolutely means a tip can never spill over the terminal
- * below; `min-h` reserves the tallest tip so the swap causes no layout shift. */
+ * below; every step's TipContent is also rendered invisibly stacked in that
+ * same cell (see the sizers below) so the cell is always as tall as the
+ * tallest tip and never resizes when the exiting tip unmounts mid-crossfade. */
 const tipVariants = {
   enter: (dir: number) => ({ x: 64 * dir, opacity: 0, filter: 'blur(10px)' }),
   center: { x: 0, opacity: 1, filter: 'blur(0px)' },
@@ -145,7 +147,20 @@ export function CliSection() {
             ref={stageRef}
             className="grid items-center gap-4 lg:mt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14"
           >
-            <div className="grid min-h-[244px] sm:min-h-[184px]">
+            <div className="grid">
+              {/* Invisible sizers: every step stacked in the same cell, never animated,
+                  so the cell's height is always the tallest tip and doesn't shift when
+                  the exiting tip unmounts. Hidden from layout participants other than
+                  sizing — no pointer events, no a11y tree presence. */}
+              {steps.map((step, i) => (
+                <div
+                  key={i}
+                  aria-hidden="true"
+                  className="invisible col-start-1 row-start-1 self-start pointer-events-none"
+                >
+                  <TipContent index={i} count={n} title={step.title} body={step.body} />
+                </div>
+              ))}
               <AnimatePresence initial={false} custom={dirRef.current}>
                 <motion.div
                   key={stage}
