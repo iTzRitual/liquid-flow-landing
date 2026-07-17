@@ -77,24 +77,59 @@ const pl = {
         'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i wprowadzi zmiany prosto w sklepie.',
       inputPlaceholder: 'Napisz do agenta…',
     },
-    openSource: {
-      heading: 'Współtwórz Liquid Flow',
-      subtitle: 'Kod jest w całości otwarty — sklonuj repozytorium i zacznij działać.',
+    getStarted: {
+      heading: 'Zacznij w kilka minut',
+      subtitle:
+        'Liquid Flow uruchamiasz prosto ze źródeł — bez instalatorów i bez rejestracji. Sklonuj repozytorium i wybierz swój tryb: aplikacja czy terminal.',
+      requirements: 'Wymagany Node.js 20+. Git jest opcjonalny — przydaje się tylko do funkcji wersjonowania.',
       copyLabel: 'Kopiuj',
       copiedLabel: 'Skopiowano',
-      nodeNote: 'Wymaga Node.js 20 lub nowszego.',
+      tabDesktop: 'Aplikacja',
+      tabCli: 'CLI',
+      desktopSteps: [
+        {
+          title: 'Uruchom aplikację',
+          body: 'Vite i Electron wstają z hot-reloadem — okno aplikacji otworzy się samo.',
+          code: ['npm run dev'],
+        },
+        {
+          title: 'Dodaj sklep',
+          body: 'Podaj nazwę, adres sklepu i hasło webmastera z panelu Comarch e-Sklep — loginem jest zawsze `webmaster`.',
+        },
+        {
+          title: 'Wybierz szablon',
+          body: 'Pliki szablonu pobiorą się na dysk i od razu ruszy synchronizacja na żywo.',
+        },
+      ],
+      cliSteps: [
+        {
+          title: 'Uruchom CLI',
+          body: 'Wolisz globalną komendę? `npm link --workspace @liquidflow/cli` i odpalasz po prostu `liquidflow`.',
+          code: ['npm run cli'],
+        },
+        {
+          title: 'Otwórz paletę komend',
+          body: 'Naciśnij `/`, a CLI podpowie wszystkie komendy z autouzupełnianiem.',
+        },
+        {
+          title: 'Poznaj kluczowe komendy',
+          body: '`/connect` łączy ze sklepem, `/templates` wybiera szablon, `/conflicts` rozwiązuje konflikty, `/git` wersjonuje, `/open` otwiera folder, `/exit` kończy.',
+        },
+      ],
+    },
+    openSource: {
+      heading: 'Chcesz współtworzyć?',
+      subtitle:
+        'Liquid Flow rozwijamy otwarcie, na licencji MIT. Każde issue, pomysł i pull request przybliżają kolejne wydanie — dołącz do nas.',
+      starCta: 'Gwiazdka na GitHubie',
       cards: [
         {
           title: 'Zgłoś błąd lub pomysł',
-          description: 'Znalazłeś błąd albo masz pomysł na nową funkcję? Otwórz issue na GitHubie.',
+          description: 'Coś nie działa albo czegoś brakuje? Otwórz issue — czytamy każde.',
         },
         {
           title: 'Dobre na początek',
-          description: 'Wybierz issue oznaczone „good first issue” i zrób swój pierwszy commit.',
-        },
-        {
-          title: 'Zostaw gwiazdkę',
-          description: 'Podoba Ci się projekt? Gwiazdka na GitHubie pomaga innym go znaleźć.',
+          description: 'Wybierz issue oznaczone „good first issue” i zrób z nami swój pierwszy commit.',
         },
       ],
     },
@@ -184,24 +219,59 @@ const en: Dictionary = {
         'Liquid Flow ships an MCP server so agents (Claude Code, Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and apply your changes straight to the shop.',
       inputPlaceholder: 'Tell the agent what to do…',
     },
-    openSource: {
-      heading: 'Contribute to Liquid Flow',
-      subtitle: 'The code is fully open — clone the repo and start hacking.',
+    getStarted: {
+      heading: 'Up and running in minutes',
+      subtitle:
+        'Liquid Flow runs straight from source — no installers, no sign-up. Clone the repo and pick your mode: the app or the terminal.',
+      requirements: 'Requires Node.js 20+. Git is optional — only needed for the versioning feature.',
       copyLabel: 'Copy',
       copiedLabel: 'Copied',
-      nodeNote: 'Requires Node.js 20 or later.',
+      tabDesktop: 'Desktop app',
+      tabCli: 'CLI',
+      desktopSteps: [
+        {
+          title: 'Launch the app',
+          body: 'Vite and Electron start with hot-reload — the app window opens by itself.',
+          code: ['npm run dev'],
+        },
+        {
+          title: 'Add your shop',
+          body: 'Enter a name, the shop URL and the webmaster password from the Comarch e-Sklep panel — the login is always `webmaster`.',
+        },
+        {
+          title: 'Pick a template',
+          body: 'The template files download to your disk and live sync starts right away.',
+        },
+      ],
+      cliSteps: [
+        {
+          title: 'Run the CLI',
+          body: 'Prefer a global command? `npm link --workspace @liquidflow/cli`, then just run `liquidflow`.',
+          code: ['npm run cli'],
+        },
+        {
+          title: 'Open the command palette',
+          body: 'Press `/` and the CLI suggests every command with autocompletion.',
+        },
+        {
+          title: 'Learn the key commands',
+          body: '`/connect` connects a shop, `/templates` picks a template, `/conflicts` resolves conflicts, `/git` versions your work, `/open` opens the local folder, `/exit` quits.',
+        },
+      ],
+    },
+    openSource: {
+      heading: 'Want to contribute?',
+      subtitle:
+        'Liquid Flow is built in the open, MIT-licensed. Every issue, idea and pull request brings the next release closer — join in.',
+      starCta: 'Star on GitHub',
       cards: [
         {
           title: 'Report a bug or request a feature',
-          description: 'Found a bug or have an idea for a new feature? Open an issue on GitHub.',
+          description: 'Something broken or missing? Open an issue — we read every one.',
         },
         {
           title: 'Good first issues',
-          description: 'Pick an issue labeled "good first issue" and make your first commit.',
-        },
-        {
-          title: 'Star the repo',
-          description: 'Like the project? A star on GitHub helps others discover it.',
+          description: 'Pick an issue labeled "good first issue" and make your first commit with us.',
         },
       ],
     },
