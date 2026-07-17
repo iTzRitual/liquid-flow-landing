@@ -2,16 +2,18 @@
 
 import * as React from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
+import { Download } from 'lucide-react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { CopyButton } from './CopyButton';
 import { GITHUB_URL } from '../Navbar';
 
 const EASE_OUT = [0.215, 0.61, 0.355, 1] as const;
 
-/* Common first steps — the app ships from source only (no DMG, no npm). */
-const INSTALL_COMMANDS = [`git clone ${GITHUB_URL}.git`, 'cd liquid-flow', 'npm install'];
+const RELEASES_URL = `${GITHUB_URL}/releases/latest`;
 
 type Tab = 'desktop' | 'cli';
+
+type Step = { title: string; body: string; code?: readonly string[] };
 
 /** Renders `code` spans for backtick-wrapped fragments in dictionary copy. */
 function InlineCode({ text }: { text: string }) {
@@ -108,7 +110,7 @@ export function GetStartedSection() {
     };
   };
 
-  const steps = tab === 'desktop' ? t.getStarted.desktopSteps : t.getStarted.cliSteps;
+  const steps: readonly Step[] = tab === 'desktop' ? t.getStarted.desktopSteps : t.getStarted.cliSteps;
 
   return (
     <section id="get-started" className="relative border-t border-white/5 bg-night-950">
@@ -118,34 +120,7 @@ export function GetStartedSection() {
           <p className="mt-4 leading-relaxed text-ink-muted">{t.getStarted.subtitle}</p>
         </motion.div>
 
-        {/* Common clone/install steps sit above the toggle, so a user landing on
-            either tab always has them in view first. */}
         <motion.div {...fadeUp(0.08)} className="mx-auto mt-12 max-w-2xl">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f14] shadow-2xl shadow-black/40">
-            <div className="flex items-center gap-2 border-b border-white/5 bg-[#10151c] px-4 py-3">
-              <span className="h-3 w-3 rounded-full bg-[#ff5f57]" aria-hidden="true" />
-              <span className="h-3 w-3 rounded-full bg-[#febc2e]" aria-hidden="true" />
-              <span className="h-3 w-3 rounded-full bg-[#28c840]" aria-hidden="true" />
-              <span className="ml-2 flex-1 truncate font-mono text-xs text-slate-500">liquidflow — zsh</span>
-              <CopyButton
-                text={INSTALL_COMMANDS.join('\n')}
-                copyLabel={t.getStarted.copyLabel}
-                copiedLabel={t.getStarted.copiedLabel}
-              />
-            </div>
-            <div className="space-y-1.5 p-4 font-mono text-[13px] leading-relaxed sm:p-5">
-              {INSTALL_COMMANDS.map((cmd) => (
-                <div key={cmd} className="flex gap-2">
-                  <span className="select-none text-ink-muted/60">$</span>
-                  <span className="text-ink">{cmd}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <p className="mt-3 text-center text-xs text-ink-muted/70">{t.getStarted.requirements}</p>
-        </motion.div>
-
-        <motion.div {...fadeUp(0.16)} className="mx-auto mt-12 max-w-2xl">
           <SegmentedToggle
             value={tab}
             onChange={setTab}
@@ -153,7 +128,7 @@ export function GetStartedSection() {
           />
 
           <AnimatePresence mode="wait" initial={false}>
-            <motion.ol
+            <motion.div
               key={tab}
               role="tabpanel"
               id={`get-started-panel-${tab}`}
@@ -162,20 +137,33 @@ export function GetStartedSection() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={reduceMotion ? undefined : { opacity: 0, y: -8, filter: 'blur(4px)' }}
               transition={{ duration: 0.25, ease: EASE_OUT }}
-              className="mt-10 space-y-8"
+              className="mt-10"
             >
-              {steps.map((step, i) => (
-                <li key={step.title} className="flex gap-4">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-full border border-white/10 font-mono text-xs text-ink-muted">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-medium text-ink">{step.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-                      <InlineCode text={step.body} />
-                    </p>
-                    {'code' in step &&
-                      step.code?.map((line) => (
+              <ol className="space-y-8">
+                {steps.map((step, i) => (
+                  <li key={step.title} className="flex gap-4">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-full border border-white/10 font-mono text-xs text-ink-muted">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-medium text-ink">{step.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
+                        <InlineCode text={step.body} />
+                      </p>
+                      {/* A download is not a terminal action — the packaged app
+                          gets a pill button; only the CLI keeps the terminal. */}
+                      {tab === 'desktop' && i === 0 && (
+                        <a
+                          href={RELEASES_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-night-950 transition-[background-color,transform] hover:bg-white active:scale-[0.97]"
+                        >
+                          <Download className="h-4 w-4" aria-hidden="true" />
+                          {t.getStarted.downloadCta}
+                        </a>
+                      )}
+                      {step.code?.map((line) => (
                         <CommandSnippet
                           key={line}
                           line={line}
@@ -183,10 +171,16 @@ export function GetStartedSection() {
                           copiedLabel={t.getStarted.copiedLabel}
                         />
                       ))}
-                  </div>
-                </li>
-              ))}
-            </motion.ol>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              {/* Node/Git only matter for the npm-installed CLI — the packaged
+                  desktop app bundles its runtime. */}
+              {tab === 'cli' && (
+                <p className="mt-8 text-center text-xs text-ink-muted/70">{t.getStarted.requirements}</p>
+              )}
+            </motion.div>
           </AnimatePresence>
         </motion.div>
       </div>

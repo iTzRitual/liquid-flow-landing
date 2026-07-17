@@ -80,17 +80,17 @@ const pl = {
     getStarted: {
       heading: 'Zacznij w kilka minut',
       subtitle:
-        'Liquid Flow uruchamiasz prosto ze źródeł — bez instalatorów i bez rejestracji. Sklonuj repozytorium i wybierz swój tryb: aplikacja czy terminal.',
+        'Pobierz gotową aplikację albo zainstaluj CLI z npm — i połącz się ze swoim sklepem w kilka minut.',
       requirements: 'Wymagany Node.js 20+. Git jest opcjonalny — przydaje się tylko do funkcji wersjonowania.',
       copyLabel: 'Kopiuj',
       copiedLabel: 'Skopiowano',
       tabDesktop: 'Aplikacja',
       tabCli: 'CLI',
+      downloadCta: 'Pobierz dla macOS',
       desktopSteps: [
         {
-          title: 'Uruchom aplikację',
-          body: 'Vite i Electron wstają z hot-reloadem — okno aplikacji otworzy się samo.',
-          code: ['npm run dev'],
+          title: 'Pobierz aplikację',
+          body: 'Wersja na macOS to plik DMG — otwórz go i przeciągnij Liquid Flow do Aplikacji. W Releases znajdziesz też buildy dla Windows (.exe) i Linuksa (.AppImage).',
         },
         {
           title: 'Dodaj sklep',
@@ -103,9 +103,9 @@ const pl = {
       ],
       cliSteps: [
         {
-          title: 'Uruchom CLI',
-          body: 'Wolisz globalną komendę? `npm link --workspace @liquidflow/cli` i odpalasz po prostu `liquidflow`.',
-          code: ['npm run cli'],
+          title: 'Zainstaluj CLI',
+          body: 'Jedna komenda z npm — potem odpalasz po prostu `liquidflow`.',
+          code: ['npm install -g @liquidflow/cli', 'liquidflow'],
         },
         {
           title: 'Otwórz paletę komend',
@@ -222,17 +222,17 @@ const en: Dictionary = {
     getStarted: {
       heading: 'Up and running in minutes',
       subtitle:
-        'Liquid Flow runs straight from source — no installers, no sign-up. Clone the repo and pick your mode: the app or the terminal.',
+        'Download the packaged app or install the CLI from npm — and connect your shop in minutes.',
       requirements: 'Requires Node.js 20+. Git is optional — only needed for the versioning feature.',
       copyLabel: 'Copy',
       copiedLabel: 'Copied',
       tabDesktop: 'Desktop app',
       tabCli: 'CLI',
+      downloadCta: 'Download for macOS',
       desktopSteps: [
         {
-          title: 'Launch the app',
-          body: 'Vite and Electron start with hot-reload — the app window opens by itself.',
-          code: ['npm run dev'],
+          title: 'Download the app',
+          body: 'The macOS build is a DMG — open it and drag Liquid Flow to Applications. Releases also has Windows (.exe) and Linux (.AppImage) builds.',
         },
         {
           title: 'Add your shop',
@@ -245,9 +245,9 @@ const en: Dictionary = {
       ],
       cliSteps: [
         {
-          title: 'Run the CLI',
-          body: 'Prefer a global command? `npm link --workspace @liquidflow/cli`, then just run `liquidflow`.',
-          code: ['npm run cli'],
+          title: 'Install the CLI',
+          body: 'One command from npm — then just run `liquidflow`.',
+          code: ['npm install -g @liquidflow/cli', 'liquidflow'],
         },
         {
           title: 'Open the command palette',
