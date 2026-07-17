@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { Download } from 'lucide-react';
+import { ChevronDown, Download } from 'lucide-react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { CopyButton } from './CopyButton';
 import { GITHUB_URL } from '../Navbar';
@@ -14,6 +14,20 @@ const RELEASES_URL = `${GITHUB_URL}/releases/latest`;
 type Tab = 'desktop' | 'cli';
 
 type Step = { title: string; body: string; code?: readonly string[] };
+
+type Os = 'mac' | 'windows' | 'linux';
+
+/* userAgent only (not userAgentData.platform): it is what UA-spoofing tests can
+ * override, and the order matters — 'Windows NT' before the generic 'Linux'
+ * that Android UAs also carry. Anything unrecognized (including Android, which
+ * has no build) falls back to macOS, the site's primary identity. */
+function detectOs(): Os {
+  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  if (/Windows/i.test(ua)) return 'windows';
+  if (/Android/i.test(ua)) return 'mac';
+  if (/Linux|X11/i.test(ua)) return 'linux';
+  return 'mac';
+}
 
 /** Renders `code` spans for backtick-wrapped fragments in dictionary copy. */
 function InlineCode({ text }: { text: string }) {
@@ -77,6 +91,100 @@ function SegmentedToggle({
           {tab.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* Split button: primary pill labeled for the visitor's OS + an attached
+ * chevron opening a menu with all three platforms. The server and first client
+ * paint always render the macOS default; the detected OS is applied after
+ * mount so the prerendered page never hydration-mismatches. */
+function DownloadMenu() {
+  const { t } = useLang();
+  const reduceMotion = useReducedMotion();
+  const [os, setOs] = React.useState<Os>('mac');
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+  React.useEffect(() => {
+    setOs(detectOs());
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative mt-4 inline-flex">
+      <a
+        href={RELEASES_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 rounded-l-full bg-ink py-2 pl-4 pr-3 text-sm font-medium text-night-950 transition-colors hover:bg-white"
+      >
+        <Download className="h-4 w-4" aria-hidden="true" />
+        {t.getStarted.download[os]}
+      </a>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t.getStarted.downloadOther}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center rounded-r-full border-l border-night-950/20 bg-ink py-2 pl-2 pr-2.5 text-night-950 transition-colors hover:bg-white"
+      >
+        <ChevronDown
+          className={`h-4 w-4 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="menu"
+            aria-label={t.getStarted.downloadOther}
+            initial={reduceMotion ? false : { opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ duration: 0.15, ease: EASE_OUT }}
+            style={{ transformOrigin: 'top left' }}
+            className="absolute left-0 top-full z-10 mt-2 w-56 rounded-xl border border-white/10 bg-night-900 p-1.5 shadow-2xl shadow-black/60"
+          >
+            {t.getStarted.platforms.map((platform) => (
+              <a
+                key={platform.name}
+                role="menuitem"
+                href={RELEASES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-ink transition-colors hover:bg-white/5 focus:bg-white/5 focus:outline-none"
+              >
+                {platform.name}
+                <span className="font-mono text-xs text-ink-muted">{platform.hint}</span>
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -151,18 +259,8 @@ export function GetStartedSection() {
                         <InlineCode text={step.body} />
                       </p>
                       {/* A download is not a terminal action — the packaged app
-                          gets a pill button; only the CLI keeps the terminal. */}
-                      {tab === 'desktop' && i === 0 && (
-                        <a
-                          href={RELEASES_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-night-950 transition-[background-color,transform] hover:bg-white active:scale-[0.97]"
-                        >
-                          <Download className="h-4 w-4" aria-hidden="true" />
-                          {t.getStarted.downloadCta}
-                        </a>
-                      )}
+                          gets a split button; only the CLI keeps the terminal. */}
+                      {tab === 'desktop' && i === 0 && <DownloadMenu />}
                       {step.code?.map((line) => (
                         <CommandSnippet
                           key={line}

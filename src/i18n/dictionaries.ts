@@ -86,11 +86,21 @@ const pl = {
       copiedLabel: 'Skopiowano',
       tabDesktop: 'Aplikacja',
       tabCli: 'CLI',
-      downloadCta: 'Pobierz dla macOS',
+      download: {
+        mac: 'Pobierz dla macOS',
+        windows: 'Pobierz dla Windows',
+        linux: 'Pobierz dla Linuksa',
+      },
+      downloadOther: 'Pozostałe platformy',
+      platforms: [
+        { name: 'macOS', hint: '.dmg' },
+        { name: 'Windows', hint: '.exe' },
+        { name: 'Linux', hint: '.AppImage' },
+      ],
       desktopSteps: [
         {
           title: 'Pobierz aplikację',
-          body: 'Wersja na macOS to plik DMG — otwórz go i przeciągnij Liquid Flow do Aplikacji. W Releases znajdziesz też buildy dla Windows (.exe) i Linuksa (.AppImage).',
+          body: 'Na macOS otwórz plik DMG i przeciągnij Liquid Flow do Aplikacji.',
         },
         {
           title: 'Dodaj sklep',
@@ -236,11 +246,21 @@ const en: Dictionary = {
       copiedLabel: 'Copied',
       tabDesktop: 'Desktop app',
       tabCli: 'CLI',
-      downloadCta: 'Download for macOS',
+      download: {
+        mac: 'Download for macOS',
+        windows: 'Download for Windows',
+        linux: 'Download for Linux',
+      },
+      downloadOther: 'Other platforms',
+      platforms: [
+        { name: 'macOS', hint: '.dmg' },
+        { name: 'Windows', hint: '.exe' },
+        { name: 'Linux', hint: '.AppImage' },
+      ],
       desktopSteps: [
         {
           title: 'Download the app',
-          body: 'The macOS build is a DMG — open it and drag Liquid Flow to Applications. Releases also has Windows (.exe) and Linux (.AppImage) builds.',
+          body: 'On macOS, open the DMG and drag Liquid Flow to Applications.',
         },
         {
           title: 'Add your shop',
