@@ -77,6 +77,27 @@ const pl = {
         'Serwer MCP w Liquid Flow pozwala agentom (Claude Code, Claude Desktop) sterować synchronizacją. Poproś agenta, a on sam sprawdzi konflikty, rozwiąże je i wprowadzi zmiany prosto w sklepie.',
       inputPlaceholder: 'Napisz do agenta…',
     },
+    openSource: {
+      heading: 'Współtwórz Liquid Flow',
+      subtitle: 'Kod jest w całości otwarty — sklonuj repozytorium i zacznij działać.',
+      copyLabel: 'Kopiuj',
+      copiedLabel: 'Skopiowano',
+      nodeNote: 'Wymaga Node.js 20 lub nowszego.',
+      cards: [
+        {
+          title: 'Zgłoś błąd lub pomysł',
+          description: 'Znalazłeś błąd albo masz pomysł na nową funkcję? Otwórz issue na GitHubie.',
+        },
+        {
+          title: 'Dobre na początek',
+          description: 'Wybierz issue oznaczone „good first issue" i zrób swój pierwszy commit.',
+        },
+        {
+          title: 'Zostaw gwiazdkę',
+          description: 'Podoba Ci się projekt? Gwiazdka na GitHubie pomaga innym go znaleźć.',
+        },
+      ],
+    },
     footer: {
       tagline: 'Open source, MIT. Zbudowane z frustracji, z miłości do macOS.',
       disclaimer:
@@ -162,6 +183,27 @@ const en: Dictionary = {
       subtitle:
         'Liquid Flow ships an MCP server so agents (Claude Code, Desktop) can drive the sync. Ask the agent — it will check conflicts, resolve them and apply your changes straight to the shop.',
       inputPlaceholder: 'Tell the agent what to do…',
+    },
+    openSource: {
+      heading: 'Contribute to Liquid Flow',
+      subtitle: 'The code is fully open — clone the repo and start hacking.',
+      copyLabel: 'Copy',
+      copiedLabel: 'Copied',
+      nodeNote: 'Requires Node.js 20 or later.',
+      cards: [
+        {
+          title: 'Report a bug or request a feature',
+          description: 'Found a bug or have an idea for a new feature? Open an issue on GitHub.',
+        },
+        {
+          title: 'Good first issues',
+          description: 'Pick an issue labeled "good first issue" and make your first commit.',
+        },
+        {
+          title: 'Star the repo',
+          description: 'Like the project? A star on GitHub helps others discover it.',
+        },
+      ],
     },
     footer: {
       tagline: 'Open source, MIT. Built out of frustration, with love for macOS.',

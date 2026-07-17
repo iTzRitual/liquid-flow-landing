@@ -3,6 +3,7 @@ import { Footer } from '@/components/Footer';
 import { Hero } from '@/components/sections/Hero';
 import { CliSection } from '@/components/sections/CliSection';
 import { McpSection } from '@/components/sections/McpSection';
+import { OpenSourceSection } from '@/components/sections/OpenSourceSection';
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
         <Hero />
         <CliSection />
         <McpSection />
+        <OpenSourceSection />
       </main>
       <Footer />
     </>
