@@ -279,17 +279,18 @@ function Header({
             </HeaderRow>
           )}
         </div>
-        {conflicts && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, ease: EASE_OUT }}
-            className="overflow-hidden text-ellipsis whitespace-pre text-right"
-            style={{ color: C.red }}
-          >
-            {s.conflictsIndicator}
-          </motion.div>
-        )}
+        {/* Always mounted so the header keeps a constant height — the row only
+            fades. Without the reservation its appearance grows the header past
+            the banner and shifts the divider + log pane below. */}
+        <motion.div
+          animate={{ opacity: conflicts ? 1 : 0 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
+          aria-hidden={!conflicts}
+          className="overflow-hidden text-ellipsis whitespace-pre text-right"
+          style={{ color: C.red }}
+        >
+          {s.conflictsIndicator}
+        </motion.div>
       </div>
     </div>
   );
