@@ -641,6 +641,17 @@ function settled(stage: number): Ui {
 
 type Step = [number, Partial<Ui>];
 
+/* Screen-to-screen swap (app ⇄ shell): the leaving screen blurs and slides out
+ * in the direction of travel while the next rides in from the opposite side —
+ * simultaneously, in the same grid cell, so there is never an empty terminal.
+ * Same values as CliSection's tip crossfade (x 64, blur 10, 0.5s ease-out) so
+ * the whole stage moves as one body. */
+const screenVariants = {
+  enter: { x: 64, opacity: 0, filter: 'blur(10px)' },
+  center: { x: 0, opacity: 1, filter: 'blur(0px)' },
+  exit: { x: -64, opacity: 0, filter: 'blur(10px)' },
+};
+
 const typeSteps = (start: number, text: string, ms: number, key: 'typed' | 'formTyped' | 'shellTyped'): Step[] =>
   [...text].map((_, i) => [start + ms * (i + 1), { [key]: text.slice(0, i + 1) } as Partial<Ui>]);
 
@@ -661,10 +672,15 @@ function introScript(): [Ui, Step[]] {
  * sign-in pane which auto-fills field by field, and the template picker takes
  * its place. */
 function zeroScript(lang: Lang): [Ui, Step[]] {
-  const start = { ...settled(0), stage: 1, typed: '', paletteOpen: false };
+  // The palette stays open — the whole app screen (palette included) rides out
+  // in the screen crossfade while the shell rides in; the exiting frame is a
+  // frozen snapshot, so the reset below is invisible until the app re-enters.
+  const start = { ...settled(0), stage: 1 };
   const steps: Step[] = [
-    // app quits → bare shell; the from-zero session state is staged behind it
-    [400, { mode: 'shell', shellTyped: '', shop: false, template: false, epoch: 1, shown: 0, revealFrom: 0 }],
+    [350, {
+      mode: 'shell', shellTyped: '', paletteOpen: false, typed: '',
+      shop: false, template: false, epoch: 1, shown: 0, revealFrom: 0,
+    }],
     ...typeSteps(1000, 'liquidflow', 45, 'shellTyped'),
     // Enter → fresh boot: banner + dim `~`, empty log, cold prompt
     [1900, { mode: 'app' }],
@@ -814,15 +830,21 @@ export function Terminal({
             children instead (Rule my-px, pt-px inside each animated wrapper),
             where it collapses together with the exit's height. */}
         <div className="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
+          {/* Both screens share one grid cell so the exiting one (a frozen
+              snapshot kept by AnimatePresence) overlaps the entering one. */}
+          <div className="grid min-h-0 flex-1">
+          <AnimatePresence initial={false}>
           {ui.mode === 'shell' ? (
             /* Between app runs (stage 1 relaunch): the cleared terminal shows a
                bare shell prompt at the top where `liquidflow` types itself. */
             <motion.div
               key="shell"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.25, ease: EASE_OUT }}
-              className="flex-1 overflow-hidden text-ellipsis whitespace-pre px-1 pt-1"
+              variants={screenVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.5, ease: EASE_OUT }}
+              className="col-start-1 row-start-1 overflow-hidden text-ellipsis whitespace-pre px-1 pt-1"
             >
               <span style={{ color: C.green }}>~/projects/liquid-sync</span>
               <span style={{ color: C.dim }}> $ </span>
@@ -832,10 +854,12 @@ export function Terminal({
           ) : (
           <motion.div
             key="app"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, ease: EASE_OUT }}
-            className="flex min-h-0 flex-1 flex-col justify-end"
+            variants={screenVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.5, ease: EASE_OUT }}
+            className="col-start-1 row-start-1 flex min-h-0 flex-col justify-end overflow-hidden"
           >
           <Header lang={lang} shop={ui.shop} template={ui.template} conflicts={ui.conflicts} />
           <Rule className="my-px" />
@@ -970,6 +994,8 @@ export function Terminal({
           </AnimatePresence>
           </motion.div>
           )}
+          </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
