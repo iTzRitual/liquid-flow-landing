@@ -7,8 +7,10 @@ import type { Lang } from '@/i18n/dictionaries';
 /* A 1:1 replica of the real Ink TUI (apps/cli in the liquid-flow repo): rainbow
  * block-art banner + status header, #82bbff dividers, scrolling log pane, the
  * yellow slash palette and the cyan round-border overlays (conflicts / git).
- * The terminal is persistent — stages append log lines and type commands into
- * the prompt instead of swapping whole frames. */
+ * The terminal is persistent within a "session": stages append log lines and
+ * type commands into the prompt instead of swapping whole frames. There are two
+ * sessions: stage 0 shows a connected app in full swing (the palette tour);
+ * stage 1 rewinds to a first launch and stages 1–4 build that session up. */
 
 const EASE_OUT = [0.215, 0.61, 0.355, 1] as const;
 
@@ -77,12 +79,13 @@ function strings(lang: Lang) {
     conflictsIndicator: pl ? '⚠ Konflikty: 2 (/conflicts)' : '⚠ Conflicts: 2 (/conflicts)',
     disconnected: '~',
     placeholder: pl ? 'wpisz / aby zobaczyć komendy · /exit wyjście' : 'type / to see commands · /exit to quit',
-    // sign-in form (/connect → add new connection)
+    // sign-in form (first launch → add new connection)
     signInTitle: pl ? 'Zaloguj sklep' : 'Sign in to shop',
     fieldName: pl ? 'Nazwa (A-Za-z0-9)' : 'Name (A-Za-z0-9)',
     fieldUrl: 'URL',
     fieldPassword: pl ? 'Hasło webmastera' : 'Webmaster password',
     fieldSave: pl ? 'Zapisz hasło?' : 'Save password?',
+    saveYes: pl ? 'Tak' : 'Yes',
     formHelp: pl ? 'Enter dalej · Esc anuluj' : 'Enter next · Esc cancel',
     // template picker
     selectTemplate: pl ? 'Wybierz szablon' : 'Select template',
@@ -123,24 +126,40 @@ function strings(lang: Lang) {
   };
 }
 
-type LogLine = { ts: string; text: string; color: string; stage: number };
+type LogLine = { ts: string; text: string; color: string };
 
-function logLines(lang: Lang): LogLine[] {
+/* Epoch 0 — the already-running session behind stage 0 (hot-reload traffic
+ * streaming in while the palette tour plays). */
+function runningLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
   return [
-    // stage 1: signed in (header gains the Shop row)
-    { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green, stage: 1 },
-    // stage 2: template selected → files pulled → hot-reload editing
-    { ts: '12:00:05', text: pl ? 'Wybrano szablon: Topaz [42]' : 'Template selected: Topaz [42]', color: C.green, stage: 2 },
-    { ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text, stage: 2 },
-    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text, stage: 2 },
-    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim, stage: 2 },
-    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green, stage: 2 },
-    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text, stage: 2 },
-    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green, stage: 2 },
-    { ts: '12:04:10', text: 'Auto-commit → liquidflow/wip', color: C.dim, stage: 2 },
+    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text },
+    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim },
+    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green },
+    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text },
+    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green },
   ];
 }
+
+/* Epoch 1 — the from-zero session that stages 1–4 build up: connect (stage 1),
+ * then template + hot-reload traffic (stage 2). */
+function sessionLines(lang: Lang): LogLine[] {
+  const pl = lang === 'pl';
+  return [
+    { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green },
+    { ts: '12:00:05', text: pl ? 'Wybrano szablon: Topaz [42]' : 'Template selected: Topaz [42]', color: C.green },
+    { ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text },
+    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text },
+    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim },
+    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green },
+    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text },
+    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green },
+    { ts: '12:04:10', text: 'Auto-commit → liquidflow/wip', color: C.dim },
+  ];
+}
+
+const RUNNING_COUNT = 5;
+const SESSION_COUNT = 9;
 
 /* — building blocks — */
 
@@ -176,11 +195,24 @@ function Banner() {
   );
 }
 
-/* Header rows appear as the session progresses, exactly like the real app's
- * StatusBar: disconnected shows only the title + a dim `~`; /connect adds the
- * Shop row (stage ≥ 1); picking a template adds Template + Git (stage ≥ 2);
- * conflicts surface their indicator (stage ≥ 3). The banner's 6 rows fix the
- * header height, so rows filling in never shift the log pane below. */
+function Cursor() {
+  return (
+    <motion.span
+      aria-hidden="true"
+      animate={{ opacity: [1, 1, 0, 0] }}
+      transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
+      className="text-white"
+    >
+      ▍
+    </motion.span>
+  );
+}
+
+/* Header rows appear and disappear as the session progresses, exactly like the
+ * real app's StatusBar: disconnected shows only the title + a dim `~`; signing
+ * in adds the Shop row; picking a template adds Template + Git; conflicts
+ * surface their indicator. The banner's 6 rows fix the header height, so rows
+ * filling in never shift the log pane below. */
 function HeaderRow({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
@@ -194,13 +226,20 @@ function HeaderRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Header({ lang, stage }: { lang: Lang; stage: number }) {
+function Header({
+  lang,
+  shop,
+  template,
+  conflicts,
+}: {
+  lang: Lang;
+  shop: boolean;
+  template: boolean;
+  conflicts: boolean;
+}) {
   const s = strings(lang);
   const labelW = Math.max(s.shopLabel.length, s.templateLabel.length, s.gitLabel.length) + 1;
   const pad = (x: string) => x.padEnd(labelW);
-  const hasShop = stage >= 1;
-  const hasTemplate = stage >= 2;
-  const hasConflicts = stage >= 3;
   return (
     <div className="flex shrink-0 pl-1 pt-1">
       <Banner />
@@ -209,7 +248,7 @@ function Header({ lang, stage }: { lang: Lang; stage: number }) {
           <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.title }}>
             Liquid Flow CLI 0.9.179
           </div>
-          {hasShop ? (
+          {shop ? (
             <HeaderRow>
               <span style={{ color: C.dim }}>{pad(s.shopLabel)}</span>
               <span style={{ color: C.green }}>● Ogródek</span>
@@ -218,14 +257,14 @@ function Header({ lang, stage }: { lang: Lang; stage: number }) {
           ) : (
             <div className="whitespace-pre" style={{ color: C.dim }}>{s.disconnected}</div>
           )}
-          {hasTemplate && (
+          {template && (
             <HeaderRow>
               <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
               <span style={{ color: C.cyan }}>Topaz</span>
               <span style={{ color: C.dim }}> [42]</span>
             </HeaderRow>
           )}
-          {hasTemplate && (
+          {template && (
             <HeaderRow>
               <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
               <span style={{ color: C.cyan }}>liquidflow/wip</span>
@@ -236,7 +275,7 @@ function Header({ lang, stage }: { lang: Lang; stage: number }) {
             </HeaderRow>
           )}
         </div>
-        {hasConflicts && (
+        {conflicts && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -345,45 +384,36 @@ function OverlayFrame({ title, children }: { title: string; children: React.Reac
   );
 }
 
-/* Sign-in form (Form.jsx: magenta round border). Shown mid-fill — name + URL
- * already entered (✓), webmaster password being typed (›), save-password pending. */
-function SignInForm({ lang }: { lang: Lang }) {
+/* Sign-in form (Form.jsx: magenta round border). `step` is the index of the
+ * active field (4 = complete); `typed` is what has been "typed" into it so far.
+ * The stage-1 script advances these to auto-fill the form field by field. */
+function SignInForm({ lang, step, typed }: { lang: Lang; step: number; typed: string }) {
   const s = strings(lang);
-  const label = (mark: string, text: string, dim: boolean) => (
-    <span style={{ color: dim ? C.dim : C.text }}>
-      {mark}
-      {text}:{' '}
-    </span>
-  );
+  const fields: [string, string][] = [
+    [s.fieldName, 'Ogródek'],
+    [s.fieldUrl, 'https://ogrodek.esklep.pl'],
+    [s.fieldPassword, '••••'],
+    [s.fieldSave, s.saveYes],
+  ];
   return (
     <div className="rounded-md border px-2 py-1" style={{ borderColor: C.magenta }}>
       <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.magenta }}>
         {s.signInTitle}
       </div>
-      <div className="overflow-hidden text-ellipsis whitespace-pre">
-        {label('✓ ', s.fieldName, true)}
-        <span style={{ color: C.dim }}>Ogródek</span>
-      </div>
-      <div className="overflow-hidden text-ellipsis whitespace-pre">
-        {label('✓ ', s.fieldUrl, true)}
-        <span style={{ color: C.dim }}>https://ogrodek.esklep.pl</span>
-      </div>
-      <div className="overflow-hidden text-ellipsis whitespace-pre">
-        {label('› ', s.fieldPassword, false)}
-        <span style={{ color: C.dim }}>••••</span>
-        <motion.span
-          aria-hidden="true"
-          animate={{ opacity: [1, 1, 0, 0] }}
-          transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
-          className="text-white"
-        >
-          ▍
-        </motion.span>
-      </div>
-      <div className="overflow-hidden text-ellipsis whitespace-pre">
-        {label('  ', s.fieldSave, true)}
-        <span style={{ color: C.dim }}>…</span>
-      </div>
+      {fields.map(([label, value], i) => {
+        const done = i < step;
+        const activeRow = i === step;
+        return (
+          <div key={label} className="overflow-hidden text-ellipsis whitespace-pre">
+            <span style={{ color: activeRow ? C.text : C.dim }}>
+              {done ? '✓ ' : activeRow ? '› ' : '  '}
+              {label}:{' '}
+            </span>
+            <span style={{ color: C.dim }}>{done ? value : activeRow ? typed : '…'}</span>
+            {activeRow && <Cursor />}
+          </div>
+        );
+      })}
       <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
         {s.formHelp}
       </div>
@@ -391,23 +421,30 @@ function SignInForm({ lang }: { lang: Lang }) {
   );
 }
 
-/* Template picker (Picker.jsx: cyan round border), first row selected. */
-function TemplatePicker({ lang }: { lang: Lang }) {
+/* Template picker (Picker.jsx: cyan round border). */
+const TEMPLATES: [string, boolean][] = [
+  ['Topaz [42]', false],
+  ['Szafir [39]', false],
+  ['Opal [23]', false],
+  ['Bursztyn [17]', true],
+];
+
+function TemplatePicker({ lang, sel }: { lang: Lang; sel: number }) {
   const s = strings(lang);
-  const row = (sel: boolean, name: string, hint?: string) => (
-    <div className="overflow-hidden text-ellipsis whitespace-pre">
-      <span style={sel ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.text }}>
-        {sel ? '› ' : '  '}
-        {name}
-      </span>
-      {hint && <span style={{ color: sel ? '#0b0f14' : C.dim }}>{'  '}{hint}</span>}
-    </div>
-  );
   return (
     <OverlayFrame title={s.selectTemplate}>
-      {row(true, 'Topaz [42]')}
-      {row(false, 'Szafir [39]')}
-      {row(false, 'Bursztyn [17]', s.lockedHint)}
+      {TEMPLATES.map(([name, locked], i) => {
+        const isSel = i === sel;
+        return (
+          <div key={name} className="overflow-hidden text-ellipsis whitespace-pre">
+            <span style={isSel ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.text }}>
+              {isSel ? '› ' : '  '}
+              {name}
+            </span>
+            {locked && <span style={{ color: isSel ? '#0b0f14' : C.dim }}>{'  '}{s.lockedHint}</span>}
+          </div>
+        );
+      })}
       <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
         {s.pickerHelp}
       </div>
@@ -501,35 +538,129 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
       ) : (
         <span style={{ color: C.dim }}>{placeholder}</span>
       )}
-      <motion.span
-        aria-hidden="true"
-        animate={{ opacity: [1, 1, 0, 0] }}
-        transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
-        className="text-white"
-      >
-        ▍
-      </motion.span>
+      <Cursor />
     </div>
   );
 }
 
-/* — the terminal window — */
+/* — the state machine — */
 
 const TYPE_MS = 65; // per-character typing speed
-const OPEN_DELAY_MS = 380; // pause between Enter and the overlay opening
 const REVEAL_MS = 440; // gap between successive log lines printing in (paced to feel like a live connection, not a dump)
-const INTRO_START_MS = 620; // beat on the cold prompt before `/connect` types itself
-const CONNECT_CMD = '/connect';
 
-type Ui = { stage: number; typed: string; settled: boolean };
+type Overlay = 'none' | 'form' | 'templates' | 'conflicts' | 'git';
 
-/** Which overlay is a stage's settled bottom zone (null → the plain input row). */
-type OverlayKind = 'form' | 'templates' | 'conflicts' | 'git';
-const overlayKindFor = (stage: number): OverlayKind | null =>
-  stage === 0 ? 'form' : stage === 1 ? 'templates' : stage === 3 ? 'conflicts' : stage === 4 ? 'git' : null;
+type Ui = {
+  stage: number;
+  typed: string; // prompt content
+  paletteOpen: boolean;
+  overlay: Overlay;
+  formStep: number; // active sign-in field (4 = complete)
+  formTyped: string; // chars "typed" into the active field
+  pickerSel: number; // selected template row
+  shop: boolean; // header: Shop row
+  template: boolean; // header: Template + Git rows
+  conflicts: boolean; // header: conflicts indicator
+  epoch: 0 | 1; // which log set (running session vs from-zero session)
+  shown: number; // log lines currently printed
+  revealFrom: number; // first line index that animates in (earlier ones mount static)
+};
 
-/** Command typed into the prompt on the way into a stage (empty = nothing typed). */
-const stageCmd = (stage: number) => (stage === 3 ? '/conflicts' : stage === 4 ? '/git' : '');
+/** The resting end-state of each stage — what backwards scrolling and fast
+ * jumps snap to, and what scripted entrances finish on. */
+function settled(stage: number): Ui {
+  const base: Ui = {
+    stage,
+    typed: '',
+    paletteOpen: false,
+    overlay: 'none',
+    formStep: 4,
+    formTyped: '',
+    pickerSel: 0,
+    shop: true,
+    template: true,
+    conflicts: false,
+    epoch: 1,
+    shown: SESSION_COUNT,
+    revealFrom: SESSION_COUNT,
+  };
+  switch (stage) {
+    case 0:
+      // Connected app in full swing: palette open over the streamed log.
+      return { ...base, typed: '/', paletteOpen: true, epoch: 0, shown: RUNNING_COUNT, revealFrom: RUNNING_COUNT };
+    case 1:
+      // First-launch session, signed in, template picker open.
+      return { ...base, overlay: 'templates', template: false, shown: 1, revealFrom: 1 };
+    case 2:
+      return base;
+    case 3:
+      return { ...base, overlay: 'conflicts', conflicts: true };
+    default:
+      return { ...base, overlay: 'git', conflicts: true };
+  }
+}
+
+type Step = [number, Partial<Ui>];
+
+const typeSteps = (start: number, text: string, ms: number, key: 'typed' | 'formTyped'): Step[] =>
+  [...text].map((_, i) => [start + ms * (i + 1), { [key]: text.slice(0, i + 1) } as Partial<Ui>]);
+
+const revealSteps = (start: number, from: number, to: number): Step[] =>
+  Array.from({ length: to - from }, (_, k) => [start + REVEAL_MS * k, { shown: from + 1 + k }]);
+
+/** Stage 0 cold boot: the running app streams hot-reload lines, then `/` types
+ * itself and the palette slides up from the bottom. Plays once, on scroll into view. */
+function introScript(): [Ui, Step[]] {
+  const start = { ...settled(0), typed: '', paletteOpen: false, shown: 0, revealFrom: 0 };
+  return [start, [...revealSteps(440, 0, RUNNING_COUNT), [2650, { typed: '/' }], [2950, { paletteOpen: true }]]];
+}
+
+/** Stage 1 "from zero": palette collapses, header and log rewind to first
+ * launch, the sign-in pane opens and auto-fills field by field, then the
+ * template picker takes its place. */
+function zeroScript(lang: Lang): [Ui, Step[]] {
+  const start = { ...settled(0), stage: 1, typed: '', paletteOpen: false };
+  const steps: Step[] = [
+    [400, { shop: false, template: false, epoch: 1, shown: 0, revealFrom: 0 }],
+    [700, { overlay: 'form', formStep: 0, formTyped: '' }],
+    ...typeSteps(1250, 'Ogródek', TYPE_MS, 'formTyped'),
+    [1950, { formStep: 1, formTyped: '' }],
+    ...typeSteps(2050, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
+    [3150, { formStep: 2, formTyped: '' }],
+    ...typeSteps(3250, '••••', 80, 'formTyped'),
+    [3850, { formStep: 3, formTyped: '' }],
+    [4200, { formTyped: strings(lang).saveYes }],
+    [4600, { formStep: 4 }],
+    [4950, { overlay: 'templates', shop: true, shown: 1 }],
+  ];
+  return [start, steps];
+}
+
+/** Stage 2: browse the picker (↓/↑ flourish), "Enter" — the picker collapses,
+ * the header gains Template + Git, and the session log prints in. */
+function pickScript(): [Ui, Step[]] {
+  const start = { ...settled(1), stage: 2 };
+  const steps: Step[] = [
+    [450, { pickerSel: 1 }],
+    [900, { pickerSel: 0 }],
+    [1350, { overlay: 'none', template: true }],
+    ...revealSteps(1800, 1, SESSION_COUNT),
+  ];
+  return [start, steps];
+}
+
+/** Stages 3/4: type the command into the prompt, then open the overlay. */
+function commandScript(stage: 3 | 4): [Ui, Step[]] {
+  const cmd = stage === 3 ? '/conflicts' : '/git';
+  const start = { ...settled(stage - 1), stage, overlay: 'none' as Overlay, conflicts: stage === 4 };
+  const typing = typeSteps(350, cmd, TYPE_MS, 'typed');
+  const done = 350 + cmd.length * TYPE_MS + 380;
+  const steps: Step[] = [
+    ...typing,
+    [done, { typed: '', overlay: stage === 3 ? 'conflicts' : 'git', conflicts: true }],
+  ];
+  return [start, steps];
+}
 
 export function Terminal({
   stage,
@@ -542,9 +673,11 @@ export function Terminal({
   animate?: boolean;
   active?: boolean;
 }) {
-  // Stage 0 starts cold (unsettled → bare input) so the intro can type into it;
-  // every other stage (and reduced motion) starts settled on its end-state.
-  const [ui, setUi] = React.useState<Ui>({ stage, typed: '', settled: !(animate && stage === 0) });
+  // Stage 0 starts cold (no palette, empty log) so the intro can play into it;
+  // reduced motion and every snap target start settled on their end-state.
+  const [ui, setUi] = React.useState<Ui>(() =>
+    animate && stage === 0 ? { ...settled(0), typed: '', paletteOpen: false, shown: 0, revealFrom: 0 } : settled(stage),
+  );
   const prevRef = React.useRef(stage);
   const introDoneRef = React.useRef(false);
 
@@ -552,96 +685,56 @@ export function Terminal({
     const prev = prevRef.current;
     prevRef.current = stage;
 
-    // Stage 0 cold-boot intro: launch → `/` opens the palette → `/connect` types
-    // itself → the sign-in form opens. Plays once, only after the stage scrolls
-    // into view; if the user scrolls on mid-type, the stage change cancels it.
-    if (animate && stage === 0) {
-      if (!active || introDoneRef.current) {
-        setUi({ stage: 0, typed: '', settled: introDoneRef.current });
+    if (!animate) {
+      setUi(settled(stage));
+      return;
+    }
+
+    const run = ([start, steps]: [Ui, Step[]]) => {
+      setUi(start);
+      const ids = steps.map(([t, p]) => setTimeout(() => setUi((u) => ({ ...u, ...p })), t));
+      return () => ids.forEach(clearTimeout);
+    };
+
+    if (stage === 0) {
+      // Intro plays once, only after the stage scrolls into view; scrolling on
+      // mid-play cancels it (cleanup) and later visits snap to the end-state.
+      if (introDoneRef.current) {
+        setUi(settled(0));
+        return;
+      }
+      if (!active) {
+        setUi({ ...settled(0), typed: '', paletteOpen: false, shown: 0, revealFrom: 0 });
         return;
       }
       introDoneRef.current = true;
-      setUi({ stage: 0, typed: '', settled: false });
-      let i = 0;
-      let typer: ReturnType<typeof setInterval> | undefined;
-      let opener: ReturnType<typeof setTimeout> | undefined;
-      const starter = setTimeout(() => {
-        typer = setInterval(() => {
-          i += 1;
-          setUi((u) => ({ ...u, typed: CONNECT_CMD.slice(0, i) }));
-          if (i >= CONNECT_CMD.length) {
-            clearInterval(typer);
-            opener = setTimeout(() => setUi({ stage: 0, typed: '', settled: true }), OPEN_DELAY_MS);
-          }
-        }, TYPE_MS);
-      }, INTRO_START_MS);
-      return () => {
-        clearTimeout(starter);
-        if (typer) clearInterval(typer);
-        if (opener) clearTimeout(opener);
-      };
+      return run(introScript());
     }
 
-    const cmd = stageCmd(stage);
-    // Backwards, reduced motion, or a stage without a command → settle instantly.
-    if (!animate || stage <= prev || !cmd) {
-      setUi({ stage, typed: '', settled: true });
+    // Backwards or a multi-stage jump → snap; single forward step → script.
+    if (stage !== prev + 1) {
+      setUi(settled(stage));
       return;
     }
-    // Forward into /conflicts or /git: type the command, then open the overlay —
-    // the terminal appends like the real app instead of swapping frames.
-    setUi({ stage, typed: '', settled: false });
-    let i = 0;
-    let opener: ReturnType<typeof setTimeout> | undefined;
-    const typer = setInterval(() => {
-      i += 1;
-      setUi((u) => ({ ...u, typed: cmd.slice(0, i) }));
-      if (i >= cmd.length) {
-        clearInterval(typer);
-        opener = setTimeout(() => setUi((u) => ({ ...u, typed: '', settled: true })), OPEN_DELAY_MS);
-      }
-    }, TYPE_MS);
-    return () => {
-      clearInterval(typer);
-      if (opener) clearTimeout(opener);
-    };
-  }, [stage, active, animate]);
+    switch (stage) {
+      case 1:
+        return run(zeroScript(lang));
+      case 2:
+        return run(pickScript());
+      default:
+        return run(commandScript(stage as 3 | 4));
+    }
+  }, [stage, active, animate, lang]);
 
   const s = strings(lang);
-  const lines = React.useMemo(() => logLines(lang), [lang]);
+  const running = React.useMemo(() => runningLines(lang), [lang]);
+  const session = React.useMemo(() => sessionLines(lang), [lang]);
+  const visibleLines = (ui.epoch === 0 ? running : session).slice(0, ui.shown);
 
-  // How many log lines are currently printed. Newly-reached stages don't dump
-  // their lines at once — they print one at a time (see effect below), so each
-  // appended row pushes the log up by one row via the layout animation, instead
-  // of snapping to the final height and filling empty space afterwards.
-  const [shown, setShown] = React.useState(() => lines.filter((l) => l.stage <= stage).length);
-  const shownRef = React.useRef(shown);
-  React.useEffect(() => {
-    const target = lines.filter((l) => l.stage <= ui.stage).length;
-    // Backwards, reduced motion, or no new lines → snap to the target count.
-    if (!animate || target <= shownRef.current) {
-      shownRef.current = target;
-      setShown(target);
-      return;
-    }
-    // Forward with new lines: print them one by one, REVEAL_MS apart.
-    const id = setInterval(() => {
-      shownRef.current += 1;
-      setShown(shownRef.current);
-      if (shownRef.current >= target) clearInterval(id);
-    }, REVEAL_MS);
-    return () => clearInterval(id);
-  }, [ui.stage, animate, lines]);
-
-  const visibleLines = lines.slice(0, shown);
-  // Every revealed line fades in as it prints (no pre-connected backlog exists).
-  const animateFrom = animate ? 0 : visibleLines.length;
-  const overlayKind = overlayKindFor(ui.stage);
-  const overlayOpen = ui.settled && overlayKind !== null;
-  // The slash palette only shows once `/` has been typed during the cold-start
-  // intro; before that it's a bare prompt, and every settled stage shows its
-  // overlay or the plain input row.
-  const paletteOpen = ui.stage === 0 && !ui.settled && ui.typed.startsWith('/');
+  const overlayOpen = ui.overlay !== 'none';
+  // While the palette or an overlay owns the bottom zone, its height morph
+  // moves the log via flex — suppress the per-line FLIP so nothing double-applies.
+  const shift = !overlayOpen && !ui.paletteOpen;
 
   return (
     /* Below lg the terminal height tracks the viewport (`100svh − stage chrome`)
@@ -671,34 +764,35 @@ export function Terminal({
             children instead (Rule my-px, pt-px inside each animated wrapper),
             where it collapses together with the exit's height. */}
         <div className="flex min-h-0 flex-1 flex-col justify-end px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
-          <Header lang={lang} stage={ui.stage} />
+          <Header lang={lang} shop={ui.shop} template={ui.template} conflicts={ui.conflicts} />
           <Rule className="my-px" />
           {/* Log-line FLIP is suppressed (zero-duration layout via `shift`)
-              whenever an overlay is open: there the bottom zone's height morph
-              owns all vertical movement and the logs ride it via flex. Letting
-              the lines self-animate too would double up and reintroduce the
-              gap. The `layout` prop itself stays on for every line's whole
-              life (see the mount-registration constraint in LogPane); the FLIP
-              runs at the input stage (the hot-reload lines printing), which
-              the height morph doesn't cover. */}
+              whenever the palette or an overlay is open: there the bottom
+              zone's height morph owns all vertical movement and the logs ride
+              it via flex. Letting the lines self-animate too would double up
+              and reintroduce the gap. The `layout` prop itself stays on for
+              every line's whole life (see the mount-registration constraint in
+              LogPane); the FLIP runs at the input stage, which the height
+              morph doesn't cover. */}
           <LogPane
             lines={visibleLines}
-            dim={overlayOpen}
-            animateFrom={animateFrom}
+            dim={overlayOpen || ui.paletteOpen}
+            animateFrom={animate ? ui.revealFrom : visibleLines.length}
             animate={animate}
-            shift={!overlayOpen}
+            shift={shift}
           />
-          {/* One persistent bottom zone. Whatever is current (input row, or a
-              conflicts/git overlay) collapses to/expands from height 0, so the
-              flex-1 log pane is pushed and pulled at exactly the panel's rate —
-              logs stay glued to its top edge with no gap and no jump.
-              Height-only (no opacity fade) — the pane is clipped by
-              overflow-hidden anyway. Each wrapper's inner pt-px is the 1px
-              spacing toward the log pane: it sits INSIDE the measured auto
-              height, so it grows/collapses with the morph instead of living on
-              a container gap that changes with the mounted-child count. */}
+          {/* One persistent bottom zone. Whatever is current (input row with an
+              optional palette, or a form/templates/conflicts/git overlay)
+              collapses to/expands from height 0, so the flex-1 log pane is
+              pushed and pulled at exactly the panel's rate — logs stay glued to
+              its top edge with no gap and no jump. Height-only (no opacity
+              fade) — the pane is clipped by overflow-hidden anyway. Each
+              wrapper's inner pt-px is the 1px spacing toward the log pane: it
+              sits INSIDE the measured auto height, so it grows/collapses with
+              the morph instead of living on a container gap that changes with
+              the mounted-child count. */}
           <AnimatePresence initial={false}>
-            {overlayOpen && overlayKind === 'form' && (
+            {ui.overlay === 'form' && (
               <motion.div
                 key="form"
                 initial={{ height: 0 }}
@@ -708,11 +802,11 @@ export function Terminal({
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
-                  <SignInForm lang={lang} />
+                  <SignInForm lang={lang} step={ui.formStep} typed={ui.formTyped} />
                 </div>
               </motion.div>
             )}
-            {overlayOpen && overlayKind === 'templates' && (
+            {ui.overlay === 'templates' && (
               <motion.div
                 key="templates"
                 initial={{ height: 0 }}
@@ -722,11 +816,11 @@ export function Terminal({
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
-                  <TemplatePicker lang={lang} />
+                  <TemplatePicker lang={lang} sel={ui.pickerSel} />
                 </div>
               </motion.div>
             )}
-            {overlayOpen && overlayKind === 'conflicts' && (
+            {ui.overlay === 'conflicts' && (
               <motion.div
                 key="conflicts"
                 initial={{ height: 0 }}
@@ -740,7 +834,7 @@ export function Terminal({
                 </div>
               </motion.div>
             )}
-            {overlayOpen && overlayKind === 'git' && (
+            {ui.overlay === 'git' && (
               <motion.div
                 key="git"
                 initial={{ height: 0 }}
@@ -765,8 +859,24 @@ export function Terminal({
               >
                 <div className="pt-px">
                   <Rule />
-                  {paletteOpen && <Palette lang={lang} />}
-                  <InputRow typed={ui.typed || (paletteOpen ? '/' : '')} placeholder={s.placeholder} />
+                  {/* The slash palette slides up from under the prompt once `/`
+                      is typed — its own height morph inside the persistent
+                      input wrapper, pushing the (dimmed) log up as it rises. */}
+                  <AnimatePresence initial={false}>
+                    {ui.paletteOpen && (
+                      <motion.div
+                        key="palette"
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        exit={{ height: 0 }}
+                        transition={{ duration: 0.5, ease: EASE_OUT }}
+                        className="overflow-hidden"
+                      >
+                        <Palette lang={lang} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <InputRow typed={ui.typed} placeholder={s.placeholder} />
                 </div>
               </motion.div>
             )}

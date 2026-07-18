@@ -50,12 +50,12 @@ const pl = {
         'Komenda `liquidflow` uruchamia pełny interfejs w terminalu — status sklepu, log na żywo i paleta slash-komend z autouzupełnianiem.',
       steps: [
         {
-          title: 'Dodaj sklep jednym formularzem',
-          body: 'Pierwsze `/connect` otwiera „Dodaj nowe połączenie" — krótki formularz: nazwa, URL sklepu i hasło webmastera. Zapisz hasło, by następnym razem łączyć się jednym Enterem.',
+          title: 'Cała aplikacja w jednym terminalu',
+          body: 'Komenda `liquidflow` uruchamia pełny interfejs: status sklepu, log synchronizacji na żywo i paletę slash-komend. Wpisz `/`, aby połączyć sklep, wybrać szablon, rozwiązać konflikty albo cofnąć zmiany przez Git — bez wychodzenia z terminala.',
         },
         {
-          title: 'Połącz i wybierz szablon',
-          body: '`/connect` loguje przez to samo API SOAP co oryginalny Liquid Sync, a potem wybierasz szablon do pracy. Sesja trwa, dopóki jej nie zamkniesz — Ctrl+C jest celowo ignorowany.',
+          title: 'Pierwsze uruchomienie? Dodaj sklep',
+          body: 'Przy pierwszym starcie Liquid Flow poprosi o dane sklepu: nazwę, URL i hasło webmastera z panelu Comarch e-Sklep. Zapisz hasło, by następnym razem łączyć się jednym Enterem — a zaraz po zalogowaniu zobaczysz listę szablonów.',
         },
         {
           title: 'Hot-reload prosto z edytora',
@@ -210,12 +210,12 @@ const en: Dictionary = {
         'The `liquidflow` command opens a full terminal UI — shop status, live log and a slash-command palette with autocompletion.',
       steps: [
         {
-          title: 'Add a shop with one form',
-          body: 'Your first `/connect` opens "Add new connection" — a short form: name, shop URL and webmaster password. Save the password to reconnect with a single Enter next time.',
+          title: 'The whole app in one terminal',
+          body: 'The `liquidflow` command opens a full interface: shop status, a live sync log and a slash-command palette. Type `/` to connect a shop, pick a template, resolve conflicts or roll back with Git — without leaving the terminal.',
         },
         {
-          title: 'Connect and pick a template',
-          body: '`/connect` signs in over the same SOAP API as the original Liquid Sync, then you pick the template to work on. The session stays alive until you end it — Ctrl+C is ignored on purpose.',
+          title: 'First run? Add your shop',
+          body: 'On first launch Liquid Flow asks for your shop details: name, URL and the webmaster password from the Comarch e-Sklep panel. Save the password to reconnect with a single Enter — and right after signing in you\'ll see your templates.',
         },
         {
           title: 'Hot-reload straight from your editor',
