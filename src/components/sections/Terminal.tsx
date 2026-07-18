@@ -215,15 +215,30 @@ function Cursor() {
 /* Header rows appear and disappear as the session progresses, exactly like the
  * real app's StatusBar: disconnected shows only the title + a dim `~`; signing
  * in adds the Shop row; picking a template adds Template + Git; conflicts
- * surface their indicator. The banner's 6 rows fix the header height, so rows
- * filling in never shift the log pane below. */
-function HeaderRow({ children }: { children: React.ReactNode }) {
+ * surface their indicator. Every row is ALWAYS mounted and only fades — the
+ * five text rows (not the banner) set the header's height, so a conditionally
+ * mounted row would grow the header and shift the divider + log pane below.
+ * `initial={false}` keeps snaps (backwards scroll, fast jumps, boot remount)
+ * from replaying a fade. */
+function HeaderFade({
+  show,
+  children,
+  className = '',
+  style,
+}: {
+  show: boolean;
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={false}
+      animate={{ opacity: show ? 1 : 0 }}
       transition={{ duration: 0.4, ease: EASE_OUT }}
-      className="overflow-hidden text-ellipsis whitespace-pre"
+      aria-hidden={!show}
+      className={`overflow-hidden text-ellipsis whitespace-pre ${className}`}
+      style={style}
     >
       {children}
     </motion.div>
@@ -252,45 +267,35 @@ function Header({
           <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.title }}>
             Liquid Flow CLI 0.9.179
           </div>
-          {shop ? (
-            <HeaderRow>
+          {/* One grid cell: the dim `~` (disconnected) and the Shop row crossfade
+              in the same slot, so the row's height never comes and goes. */}
+          <div className="grid">
+            <HeaderFade show={!shop} className="col-start-1 row-start-1" style={{ color: C.dim }}>
+              {s.disconnected}
+            </HeaderFade>
+            <HeaderFade show={shop} className="col-start-1 row-start-1">
               <span style={{ color: C.dim }}>{pad(s.shopLabel)}</span>
               <span style={{ color: C.green }}>● Ogródek</span>
               <span style={{ color: C.dim }}>  https://ogrodek.esklep.pl</span>
-            </HeaderRow>
-          ) : (
-            <div className="whitespace-pre" style={{ color: C.dim }}>{s.disconnected}</div>
-          )}
-          {template && (
-            <HeaderRow>
-              <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
-              <span style={{ color: C.cyan }}>Topaz</span>
-              <span style={{ color: C.dim }}> [42]</span>
-            </HeaderRow>
-          )}
-          {template && (
-            <HeaderRow>
-              <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
-              <span style={{ color: C.cyan }}>liquidflow/wip</span>
-              <span style={{ color: C.prompt }}> +2</span>
-              <span style={{ color: C.dim }}> · </span>
-              <span style={{ color: C.green }}>commit ✓ </span>
-              <span style={{ color: C.green }}>push ✓</span>
-            </HeaderRow>
-          )}
+            </HeaderFade>
+          </div>
+          <HeaderFade show={template}>
+            <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
+            <span style={{ color: C.cyan }}>Topaz</span>
+            <span style={{ color: C.dim }}> [42]</span>
+          </HeaderFade>
+          <HeaderFade show={template}>
+            <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
+            <span style={{ color: C.cyan }}>liquidflow/wip</span>
+            <span style={{ color: C.prompt }}> +2</span>
+            <span style={{ color: C.dim }}> · </span>
+            <span style={{ color: C.green }}>commit ✓ </span>
+            <span style={{ color: C.green }}>push ✓</span>
+          </HeaderFade>
         </div>
-        {/* Always mounted so the header keeps a constant height — the row only
-            fades. Without the reservation its appearance grows the header past
-            the banner and shifts the divider + log pane below. */}
-        <motion.div
-          animate={{ opacity: conflicts ? 1 : 0 }}
-          transition={{ duration: 0.4, ease: EASE_OUT }}
-          aria-hidden={!conflicts}
-          className="overflow-hidden text-ellipsis whitespace-pre text-right"
-          style={{ color: C.red }}
-        >
+        <HeaderFade show={conflicts} className="text-right" style={{ color: C.red }}>
           {s.conflictsIndicator}
-        </motion.div>
+        </HeaderFade>
       </div>
     </div>
   );
