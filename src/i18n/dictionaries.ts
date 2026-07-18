@@ -55,7 +55,7 @@ const pl = {
         },
         {
           title: 'Pierwsze uruchomienie? Dodaj sklep',
-          body: 'Przy pierwszym starcie Liquid Flow poprosi o dane sklepu: nazwę, URL i hasło webmastera z panelu Comarch e-Sklep. Zapisz hasło, by następnym razem łączyć się jednym Enterem — a zaraz po zalogowaniu zobaczysz listę szablonów.',
+          body: 'Przy pierwszym starcie Liquid Flow poprosi o dane sklepu: nazwę, URL i hasło webmastera z panelu Comarch e-Sklep. Zapisz hasło, by łączyć się jednym Enterem, albo zaimportuj gotową listę sklepów z pliku — a zaraz po zalogowaniu zobaczysz swoje szablony.',
         },
         {
           title: 'Hot-reload prosto z edytora',
@@ -215,7 +215,7 @@ const en: Dictionary = {
         },
         {
           title: 'First run? Add your shop',
-          body: 'On first launch Liquid Flow asks for your shop details: name, URL and the webmaster password from the Comarch e-Sklep panel. Save the password to reconnect with a single Enter — and right after signing in you\'ll see your templates.',
+          body: 'On first launch Liquid Flow asks for your shop details: name, URL and the webmaster password from the Comarch e-Sklep panel. Save the password to reconnect with a single Enter, or import a ready-made shop list from a file — and right after signing in you\'ll see your templates.',
         },
         {
           title: 'Hot-reload straight from your editor',

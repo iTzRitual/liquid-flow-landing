@@ -87,6 +87,10 @@ function strings(lang: Lang) {
     fieldSave: pl ? 'Zapisz hasło?' : 'Save password?',
     saveYes: pl ? 'Tak' : 'Yes',
     formHelp: pl ? 'Enter dalej · Esc anuluj' : 'Enter next · Esc cancel',
+    // connect picker (first run: no saved shops yet, matches the real /connect)
+    connectTitle: pl ? 'Połącz ze sklepem' : 'Connect to shop',
+    connectAdd: pl ? 'Dodaj nowe połączenie' : 'Add new connection',
+    connectImport: pl ? 'Importuj sklepy' : 'Import shops',
     // template picker
     selectTemplate: pl ? 'Wybierz szablon' : 'Select template',
     lockedHint: pl ? '🔒 zablokowany' : '🔒 locked',
@@ -421,6 +425,31 @@ function SignInForm({ lang, step, typed }: { lang: Lang; step: number; typed: st
   );
 }
 
+/* First-run connect picker (openConnect in the real commands.js): with no
+ * saved shops it offers exactly "add new connection" and "import shops". */
+function ConnectPicker({ lang, sel }: { lang: Lang; sel: number }) {
+  const s = strings(lang);
+  const rows = [s.connectAdd, s.connectImport];
+  return (
+    <OverlayFrame title={s.connectTitle}>
+      {rows.map((label, i) => {
+        const isSel = i === sel;
+        return (
+          <div key={label} className="overflow-hidden text-ellipsis whitespace-pre">
+            <span style={isSel ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.text }}>
+              {isSel ? '› ' : '  '}
+              {label}
+            </span>
+          </div>
+        );
+      })}
+      <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
+        {s.pickerHelp}
+      </div>
+    </OverlayFrame>
+  );
+}
+
 /* Template picker (Picker.jsx: cyan round border). */
 const TEMPLATES: [string, boolean][] = [
   ['Topaz [42]', false],
@@ -548,10 +577,12 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
 const TYPE_MS = 65; // per-character typing speed
 const REVEAL_MS = 440; // gap between successive log lines printing in (paced to feel like a live connection, not a dump)
 
-type Overlay = 'none' | 'form' | 'templates' | 'conflicts' | 'git';
+type Overlay = 'none' | 'connect' | 'form' | 'templates' | 'conflicts' | 'git';
 
 type Ui = {
   stage: number;
+  mode: 'app' | 'shell'; // 'shell' = bare terminal between app runs (stage 1 relaunch)
+  shellTyped: string; // chars typed at the shell prompt
   typed: string; // prompt content
   paletteOpen: boolean;
   overlay: Overlay;
@@ -571,6 +602,8 @@ type Ui = {
 function settled(stage: number): Ui {
   const base: Ui = {
     stage,
+    mode: 'app',
+    shellTyped: '',
     typed: '',
     paletteOpen: false,
     overlay: 'none',
@@ -602,7 +635,7 @@ function settled(stage: number): Ui {
 
 type Step = [number, Partial<Ui>];
 
-const typeSteps = (start: number, text: string, ms: number, key: 'typed' | 'formTyped'): Step[] =>
+const typeSteps = (start: number, text: string, ms: number, key: 'typed' | 'formTyped' | 'shellTyped'): Step[] =>
   [...text].map((_, i) => [start + ms * (i + 1), { [key]: text.slice(0, i + 1) } as Partial<Ui>]);
 
 const revealSteps = (start: number, from: number, to: number): Step[] =>
@@ -615,23 +648,34 @@ function introScript(): [Ui, Step[]] {
   return [start, [...revealSteps(440, 0, RUNNING_COUNT), [2650, { typed: '/' }], [2950, { paletteOpen: true }]]];
 }
 
-/** Stage 1 "from zero": palette collapses, header and log rewind to first
- * launch, the sign-in pane opens and auto-fills field by field, then the
- * template picker takes its place. */
+/** Stage 1 "from zero": the palette closes and the whole terminal clears to a
+ * bare shell, `liquidflow` types at the prompt and the app boots fresh
+ * (banner + `~`). The first-run connect picker offers "add new connection" /
+ * "import shops" (the highlight sweeps over import), then "add new" opens the
+ * sign-in pane which auto-fills field by field, and the template picker takes
+ * its place. */
 function zeroScript(lang: Lang): [Ui, Step[]] {
   const start = { ...settled(0), stage: 1, typed: '', paletteOpen: false };
   const steps: Step[] = [
-    [400, { shop: false, template: false, epoch: 1, shown: 0, revealFrom: 0 }],
-    [700, { overlay: 'form', formStep: 0, formTyped: '' }],
-    ...typeSteps(1250, 'Ogródek', TYPE_MS, 'formTyped'),
-    [1950, { formStep: 1, formTyped: '' }],
-    ...typeSteps(2050, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
-    [3150, { formStep: 2, formTyped: '' }],
-    ...typeSteps(3250, '••••', 80, 'formTyped'),
-    [3850, { formStep: 3, formTyped: '' }],
-    [4200, { formTyped: strings(lang).saveYes }],
-    [4600, { formStep: 4 }],
-    [4950, { overlay: 'templates', shop: true, shown: 1 }],
+    // app quits → bare shell; the from-zero session state is staged behind it
+    [400, { mode: 'shell', shellTyped: '', shop: false, template: false, epoch: 1, shown: 0, revealFrom: 0 }],
+    ...typeSteps(1000, 'liquidflow', 45, 'shellTyped'),
+    // Enter → fresh boot: banner + dim `~`, empty log, cold prompt
+    [1900, { mode: 'app' }],
+    // first /connect: no saved shops — add new or import
+    [2500, { overlay: 'connect', pickerSel: 0 }],
+    [3100, { pickerSel: 1 }],
+    [3750, { pickerSel: 0 }],
+    [4200, { overlay: 'form', formStep: 0, formTyped: '' }],
+    ...typeSteps(4750, 'Ogródek', TYPE_MS, 'formTyped'),
+    [5450, { formStep: 1, formTyped: '' }],
+    ...typeSteps(5550, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
+    [6650, { formStep: 2, formTyped: '' }],
+    ...typeSteps(6750, '••••', 80, 'formTyped'),
+    [7350, { formStep: 3, formTyped: '' }],
+    [7700, { formTyped: strings(lang).saveYes }],
+    [8100, { formStep: 4 }],
+    [8450, { overlay: 'templates', shop: true, shown: 1 }],
   ];
   return [start, steps];
 }
@@ -763,7 +807,30 @@ export function Terminal({
             snaps the bottom-anchored logs 1px down. The 1px rhythm lives on the
             children instead (Rule my-px, pt-px inside each animated wrapper),
             where it collapses together with the exit's height. */}
-        <div className="flex min-h-0 flex-1 flex-col justify-end px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
+        <div className="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
+          {ui.mode === 'shell' ? (
+            /* Between app runs (stage 1 relaunch): the cleared terminal shows a
+               bare shell prompt at the top where `liquidflow` types itself. */
+            <motion.div
+              key="shell"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25, ease: EASE_OUT }}
+              className="flex-1 overflow-hidden text-ellipsis whitespace-pre px-1 pt-1"
+            >
+              <span style={{ color: C.green }}>~/projects/liquid-sync</span>
+              <span style={{ color: C.dim }}> $ </span>
+              <span className="text-white">{ui.shellTyped}</span>
+              <Cursor />
+            </motion.div>
+          ) : (
+          <motion.div
+            key="app"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35, ease: EASE_OUT }}
+            className="flex min-h-0 flex-1 flex-col justify-end"
+          >
           <Header lang={lang} shop={ui.shop} template={ui.template} conflicts={ui.conflicts} />
           <Rule className="my-px" />
           {/* Log-line FLIP is suppressed (zero-duration layout via `shift`)
@@ -792,6 +859,20 @@ export function Terminal({
               the morph instead of living on a container gap that changes with
               the mounted-child count. */}
           <AnimatePresence initial={false}>
+            {ui.overlay === 'connect' && (
+              <motion.div
+                key="connect"
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT }}
+                className="shrink-0 overflow-hidden"
+              >
+                <div className="pt-px">
+                  <ConnectPicker lang={lang} sel={ui.pickerSel} />
+                </div>
+              </motion.div>
+            )}
             {ui.overlay === 'form' && (
               <motion.div
                 key="form"
@@ -881,6 +962,8 @@ export function Terminal({
               </motion.div>
             )}
           </AnimatePresence>
+          </motion.div>
+          )}
         </div>
       </div>
     </div>
