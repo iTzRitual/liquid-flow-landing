@@ -831,9 +831,15 @@ export function Terminal({
             where it collapses together with the exit's height. */}
         <div className="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-1 font-mono text-[11.5px] leading-[1.6] sm:px-3 sm:text-[12.5px] lg:h-[480px] lg:flex-none">
           {/* Both screens share one grid cell so the exiting one (a frozen
-              snapshot kept by AnimatePresence) overlaps the entering one. */}
+              snapshot kept by AnimatePresence) overlaps the entering one.
+              NO initial={false} here: that would stamp `initial: false` into
+              PresenceContext for the first-mounted screen's whole subtree, and
+              every log line / palette / overlay mounted later inside it would
+              silently skip its own entrance (lines pop instead of riding up).
+              The wrapper's one-time enter plays at page load, far below the
+              fold, where nobody sees it. */}
           <div className="grid min-h-0 flex-1">
-          <AnimatePresence initial={false}>
+          <AnimatePresence>
           {ui.mode === 'shell' ? (
             /* Between app runs (stage 1 relaunch): the cleared terminal shows a
                bare shell prompt at the top where `liquidflow` types itself. */
