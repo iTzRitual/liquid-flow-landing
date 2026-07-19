@@ -199,13 +199,13 @@ function Banner() {
   );
 }
 
-function Cursor() {
+function Cursor({ className = '' }: { className?: string }) {
   return (
     <motion.span
       aria-hidden="true"
       animate={{ opacity: [1, 1, 0, 0] }}
       transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 0.5, 1] }}
-      className="text-white"
+      className={`text-white ${className}`}
     >
       ▍
     </motion.span>
@@ -569,11 +569,16 @@ function InputRow({ typed, placeholder }: { typed: string; placeholder: string }
     <div className="overflow-hidden text-ellipsis whitespace-pre pl-1">
       <span style={{ color: C.prompt }}>› </span>
       {typed ? (
-        <span className="text-white">{typed}</span>
+        <>
+          <span className="text-white">{typed}</span>
+          <Cursor />
+        </>
       ) : (
-        <span style={{ color: C.dim }}>{placeholder}</span>
+        <span className="relative">
+          <Cursor className="absolute left-0" />
+          <span style={{ color: C.dim }}>{placeholder}</span>
+        </span>
       )}
-      <Cursor />
     </div>
   );
 }
