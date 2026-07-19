@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { AnimatePresence, motion, useInView, useReducedMotion, useScroll } from 'motion/react';
+import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import type { MotionValue } from 'motion/react';
 import { useLang } from '@/i18n/LanguageProvider';
 import { Terminal } from './Terminal';
 
@@ -179,7 +180,7 @@ export function CliSection() {
             <Terminal stage={stage} lang={lang} active={stageInView} />
           </div>
 
-          <ProgressDots active={stage} count={n} />
+          <ProgressDots active={stage} count={n} scrollYProgress={scrollYProgress} />
         </div>
       </div>
     </section>
@@ -197,17 +198,70 @@ function CliHeading({ heading, subtitle }: { heading: string; subtitle: string }
   );
 }
 
-function ProgressDots({ active, count }: { active: number; count: number }) {
+function ProgressDots({
+  active,
+  count,
+  scrollYProgress,
+}: {
+  active: number;
+  count: number;
+  scrollYProgress: MotionValue<number>;
+}) {
   return (
     <div className="mt-4 flex items-center justify-center gap-2 lg:mt-10" aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
-        <span
+        <ProgressDot
           key={i}
-          className={`h-1.5 rounded-full transition-all duration-300 ${
-            i === active ? 'w-6 bg-ink' : 'w-1.5 bg-white/20'
-          }`}
+          index={i}
+          active={i === active}
+          complete={i < active}
+          count={count}
+          scrollYProgress={scrollYProgress}
         />
       ))}
     </div>
+  );
+}
+
+/* The active dot doubles as a track: a solid fill grows across it as the user
+ * scrolls through its stage window, giving mid-stage feedback the old
+ * discrete flip couldn't. Every dot gets its own transform unconditionally
+ * (hooks can't be conditional). The fill also stays mounted for completed
+ * dots (scaleX clamped to 1, so it reads solid) — the track's background is
+ * a constant white/20 so only width transitions, otherwise the outgoing dot's
+ * bg-color tween and the fill's unmount would race and flicker. */
+function ProgressDot({
+  index,
+  active,
+  complete,
+  count,
+  scrollYProgress,
+}: {
+  index: number;
+  active: boolean;
+  complete: boolean;
+  count: number;
+  scrollYProgress: MotionValue<number>;
+}) {
+  // Stage `i`'s window is [(i-0.5)/(n-1), (i+0.5)/(n-1)], clamped to [0, 1] —
+  // the first and last stages only get a half window at the section edges.
+  const start = index === 0 ? 0 : (index - 0.5) / (count - 1);
+  const end = index === count - 1 ? 1 : (index + 0.5) / (count - 1);
+  const fill = useTransform(scrollYProgress, [start, end], [0, 1], { clamp: true });
+
+  return (
+    <span
+      className={`h-1.5 overflow-hidden rounded-full bg-white/20 transition-all duration-300 ${
+        active ? 'w-6' : 'w-1.5'
+      }`}
+    >
+      {/* motion.span, not motion.div — a span can't contain block-level children. */}
+      {(active || complete) && (
+        <motion.span
+          className="block h-full w-full origin-left rounded-full bg-ink"
+          style={{ scaleX: fill }}
+        />
+      )}
+    </span>
   );
 }
