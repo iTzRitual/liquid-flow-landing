@@ -943,25 +943,26 @@ export function Terminal({
 
   const overlayOpen = ui.overlay !== 'none';
 
-  // The bottom zone (palette/overlay) height-morphs over 0.5s whenever it
-  // opens, closes, or swaps to a different panel — during that window its
-  // own height change moves the log pane via flex, so per-line FLIP is
+  // The bottom zone (palette/overlay) height-morphs whenever it opens,
+  // closes, or swaps to a different panel — during that window its own
+  // height change moves the log pane via flex, so per-line FLIP is
   // suppressed to avoid double-animating the same reposition. Once it's
   // settled (the common case — e.g. stage 0's palette sits open for the rest
   // of the stage while heartbeat lines keep streaming underneath it), FLIP is
   // back on so newly appended lines still glide the older ones up smoothly
-  // instead of snapping.
-  const [morphing, setMorphing] = React.useState(false);
-  const bottomZoneRef = React.useRef({ overlay: ui.overlay, paletteOpen: ui.paletteOpen });
+  // instead of snapping. Tied to the wrapper's own `onAnimationComplete`
+  // rather than a guessed timer: a fixed-duration timer races the scripted
+  // reveal timeline under rapid back-and-forth navigation (each stage
+  // transition restarts both independently), which could leave `shift`
+  // toggled off past when the morph actually finished, or on mid-morph —
+  // both read as stuck/half-animated lines. Firing off the real animation
+  // event instead means it can never drift out of sync with what's
+  // actually on screen, however fast the stage changes.
+  const [shift, setShift] = React.useState(true);
   React.useEffect(() => {
-    const prev = bottomZoneRef.current;
-    bottomZoneRef.current = { overlay: ui.overlay, paletteOpen: ui.paletteOpen };
-    if (prev.overlay === ui.overlay && prev.paletteOpen === ui.paletteOpen) return;
-    setMorphing(true);
-    const id = setTimeout(() => setMorphing(false), 520);
-    return () => clearTimeout(id);
+    setShift(false);
   }, [ui.overlay, ui.paletteOpen]);
-  const shift = !morphing;
+  const onBottomZoneSettled = () => setShift(true);
 
   return (
     /* Below lg the terminal height tracks the viewport (`100svh − stage chrome`)
@@ -1056,7 +1057,7 @@ export function Terminal({
               sits INSIDE the measured auto height, so it grows/collapses with
               the morph instead of living on a container gap that changes with
               the mounted-child count. */}
-          <AnimatePresence initial={false}>
+          <AnimatePresence initial={false} onExitComplete={onBottomZoneSettled}>
             {ui.overlay === 'connect' && (
               <motion.div
                 key="connect"
@@ -1064,6 +1065,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1078,6 +1080,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1092,6 +1095,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1106,6 +1110,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1120,6 +1125,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1134,6 +1140,7 @@ export function Terminal({
                 animate={{ height: 'auto' }}
                 exit={{ height: 0 }}
                 transition={{ duration: 0.5, ease: EASE_OUT }}
+                onAnimationComplete={onBottomZoneSettled}
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
@@ -1141,7 +1148,7 @@ export function Terminal({
                   {/* The slash palette slides up from under the prompt once `/`
                       is typed — its own height morph inside the persistent
                       input wrapper, pushing the (dimmed) log up as it rises. */}
-                  <AnimatePresence initial={false}>
+                  <AnimatePresence initial={false} onExitComplete={onBottomZoneSettled}>
                     {ui.paletteOpen && (
                       <motion.div
                         key="palette"
@@ -1149,6 +1156,7 @@ export function Terminal({
                         animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
                         transition={{ duration: 0.5, ease: EASE_OUT }}
+                        onAnimationComplete={onBottomZoneSettled}
                         className="overflow-hidden"
                       >
                         <Palette lang={lang} />
