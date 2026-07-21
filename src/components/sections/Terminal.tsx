@@ -864,8 +864,10 @@ export function Terminal({
   // every move between stages 1–4. Two independent streams, one per epoch/
   // session narrative: `extra0` for stage 0's reconnect, `extra1` for the
   // from-zero session stages 1–4 share. Neither resets on ordinary stage
-  // navigation — only `extra1` resets, explicitly, when the from-zero story
-  // itself restarts (zeroScript firing again below).
+  // navigation — `extra1` resets only where a script replays the session
+  // reveal from scratch (zeroScript on a boot replay, pickScript on a
+  // re-pick), so old heartbeat traffic can't linger under the re-revealing
+  // lines. See both cases in the transition effect below.
   const [extra0, setExtra0] = React.useState<LogLine[]>([]);
   const [extra1, setExtra1] = React.useState<LogLine[]>([]);
   const extra0IdRef = React.useRef(0);
@@ -913,6 +915,12 @@ export function Terminal({
         setExtra1([]);
         return run(zeroScript());
       case 2:
+        // pickScript replays the session reveal from shown=1, so any heartbeat
+        // traffic left in extra1 from an earlier stage-2 visit must drop too:
+        // kept, it stays pinned at the bottom while the re-revealing session
+        // lines get inserted ABOVE it (visibleLines = session ++ extra1),
+        // making new lines appear mid-list instead of rising from the bottom.
+        setExtra1([]);
         return run(pickScript());
       default:
         return run(commandScript(stage as 3 | 4));
