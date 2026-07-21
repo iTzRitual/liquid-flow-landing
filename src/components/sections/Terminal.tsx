@@ -135,7 +135,15 @@ function strings(lang: Lang) {
   };
 }
 
-type LogLine = { ts: string; text: string; color: string; kind?: 'separator' };
+// `id` is a stable identity independent of the line's position in whatever
+// array it's rendered from — required because the periodic "extra" lines
+// slide through a trimmed window (oldest dropped once the buffer is full),
+// which shifts every remaining line's ARRAY INDEX. Keying render on that
+// index would silently reassign each surviving DOM node to a different
+// line's text on every trim (no unmount, so no animation — and no unmount
+// mean no fresh entrance either) instead of letting the dropped line unmount
+// and the new one mount in cleanly.
+type LogLine = { id: string; ts: string; text: string; color: string; kind?: 'separator' };
 
 function liveTs(): string {
   const now = new Date();
@@ -157,16 +165,16 @@ const FAKE_FILES = [
   'common/navigation.liquid',
 ];
 
-function fileChangedLine(lang: Lang, idx: number): LogLine {
+function fileChangedLine(lang: Lang, id: string, fileIdx: number): LogLine {
   const pl = lang === 'pl';
-  const label = `3/0/${FAKE_FILES[idx % FAKE_FILES.length]}`;
-  return { ts: liveTs(), text: pl ? `Plik został zmieniony — ${label}` : `File changed — ${label}`, color: C.green };
+  const label = `3/0/${FAKE_FILES[fileIdx % FAKE_FILES.length]}`;
+  return { id, ts: liveTs(), text: pl ? `Plik został zmieniony — ${label}` : `File changed — ${label}`, color: C.green };
 }
 
-function commitLine(lang: Lang): LogLine {
+function commitLine(lang: Lang, id: string): LogLine {
   const pl = lang === 'pl';
   const hash = Math.random().toString(16).slice(2, 9);
-  return { ts: liveTs(), text: pl ? `📝 Git: zapisano wersję ${hash}` : `📝 Git: saved version ${hash}`, color: C.dim };
+  return { id, ts: liveTs(), text: pl ? `📝 Git: zapisano wersję ${hash}` : `📝 Git: saved version ${hash}`, color: C.dim };
 }
 
 /* Epoch 0 — reopening the app on an existing session (stage 0): a session
@@ -182,11 +190,11 @@ function runningLines(lang: Lang): LogLine[] {
   const sepText = `── ${pl ? 'Nowa sesja' : 'New session'} • ${when} ` + '─'.repeat(200);
   const ts = liveTs();
   return [
-    { ts: '', text: sepText, color: C.divider, kind: 'separator' },
-    { ts, text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
-    { ts, text: pl ? 'Folder lokalny gotowy — pliki już pobrane' : 'Local folder ready — files already downloaded', color: C.green },
-    { ts, text: pl ? 'Sprawdzono niezgodności — konflikty: 0' : 'Mismatches checked — conflicts: 0', color: C.green },
-    { ts, text: pl ? `Synchronizacja aktywna — hot-reload (${s.selectedTemplate})` : `Synchronization active — hot-reload (${s.selectedTemplate})`, color: C.green },
+    { id: 'run-sep', ts: '', text: sepText, color: C.divider, kind: 'separator' },
+    { id: 'run-0', ts, text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
+    { id: 'run-1', ts, text: pl ? 'Folder lokalny gotowy — pliki już pobrane' : 'Local folder ready — files already downloaded', color: C.green },
+    { id: 'run-2', ts, text: pl ? 'Sprawdzono niezgodności — konflikty: 0' : 'Mismatches checked — conflicts: 0', color: C.green },
+    { id: 'run-3', ts, text: pl ? `Synchronizacja aktywna — hot-reload (${s.selectedTemplate})` : `Synchronization active — hot-reload (${s.selectedTemplate})`, color: C.green },
   ];
 }
 
@@ -198,12 +206,12 @@ function sessionLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
   const s = strings(lang);
   return [
-    { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green },
-    { ts: '12:00:05', text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
-    { ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text },
-    { ts: '12:04:03', text: pl ? 'Plik został zmieniony — 3/0/common/header.liquid' : 'File changed — 3/0/common/header.liquid', color: C.green },
-    { ts: '12:04:09', text: pl ? 'Plik został zmieniony — 3/0/css/layout.css' : 'File changed — 3/0/css/layout.css', color: C.green },
-    { ts: '12:04:10', text: pl ? '📝 Git: zapisano wersję a3f21c9' : '📝 Git: saved version a3f21c9', color: C.dim },
+    { id: 'sess-0', ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green },
+    { id: 'sess-1', ts: '12:00:05', text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
+    { id: 'sess-2', ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text },
+    { id: 'sess-3', ts: '12:04:03', text: pl ? 'Plik został zmieniony — 3/0/common/header.liquid' : 'File changed — 3/0/common/header.liquid', color: C.green },
+    { id: 'sess-4', ts: '12:04:09', text: pl ? 'Plik został zmieniony — 3/0/css/layout.css' : 'File changed — 3/0/css/layout.css', color: C.green },
+    { id: 'sess-5', ts: '12:04:10', text: pl ? '📝 Git: zapisano wersję a3f21c9' : '📝 Git: saved version a3f21c9', color: C.dim },
   ];
 }
 
@@ -372,7 +380,7 @@ function LogPane({
       <div className="absolute inset-x-0 bottom-0 px-1">
       {lines.map((l, i) => (
         <motion.div
-          key={i}
+          key={l.id}
           // Unified scroll: a new line starts one line-height below its slot
           // (y '100%' — tracks the fractional mobile metrics too) and rides up
           // into place while the existing lines FLIP up via `layout="position"`.
@@ -691,7 +699,6 @@ type Ui = {
   epoch: 0 | 1; // which log set (running session vs from-zero session)
   shown: number; // log lines currently printed
   revealFrom: number; // first line index that animates in (earlier ones mount static)
-  extra: LogLine[]; // simulated activity appended every few seconds (stages 0 and 2)
 };
 
 /** The resting end-state of each stage — what backwards scrolling and fast
@@ -714,7 +721,6 @@ function settled(stage: number): Ui {
     epoch: 1,
     shown: SESSION_COUNT,
     revealFrom: SESSION_COUNT,
-    extra: [],
   };
   switch (stage) {
     case 0:
@@ -777,29 +783,28 @@ function zeroScript(): [Ui, Step[]] {
     ...typeSteps(1000, 'liquidflow', 45, 'shellTyped'),
     // Enter → fresh boot: banner + dim `~`, empty log, cold prompt
     [1900, { mode: 'app' }],
-    // first /connect: no saved shops — add new or import
+    // first /connect: no saved shops — add new or import; pause on "add new", then Enter
     [2500, { overlay: 'connect', pickerSel: 0 }],
-    [3100, { pickerSel: 1 }],
-    [3750, { pickerSel: 0 }],
     [4200, { overlay: 'form', formStep: 0, formTyped: '' }],
     ...typeSteps(4750, 'Ogródek', TYPE_MS, 'formTyped'),
     [5450, { formStep: 1, formTyped: '' }],
     ...typeSteps(5550, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
     [6650, { formStep: 2, formTyped: '' }],
     ...typeSteps(6750, '••••', 80, 'formTyped'),
+    // Save password?: pause on the default "Yes", then Enter
     [7350, { formStep: 3, formChoice: true }],
-    [7650, { formChoice: false }],
-    [7900, { formChoice: true }],
     [8100, { formStep: 4 }],
     [8450, { overlay: 'templates', shop: true, shown: 1 }],
   ];
   return [start, steps];
 }
 
-/** Stage 2: browse the picker (↓/↑ flourish), "Enter" — the picker collapses,
- * the header gains Template + Git, and the session log prints in. */
+/** Stage 2: browse the picker top to bottom — template 1, then 2, then 3
+ * (Własny/Custom) — "Enter" — the picker collapses, the header gains
+ * Template + Git, and the session log prints in. Always starts from template
+ * 1 regardless of where `settled(1)`'s resting state leaves the selection. */
 function pickScript(): [Ui, Step[]] {
-  const start = { ...settled(1), stage: 2 };
+  const start = { ...settled(1), stage: 2, pickerSel: 0 };
   const steps: Step[] = [
     [450, { pickerSel: 1 }],
     [900, { pickerSel: 2 }],
@@ -841,6 +846,19 @@ export function Terminal({
   const prevRef = React.useRef(stage);
   const introDoneRef = React.useRef(false);
 
+  // Simulated activity — kept OUTSIDE `ui` deliberately: `ui` is wholesale
+  // replaced on every stage transition (scripted or snapped), which is right
+  // for the scripted fields but would wipe this accumulated log history on
+  // every move between stages 1–4. Two independent streams, one per epoch/
+  // session narrative: `extra0` for stage 0's reconnect, `extra1` for the
+  // from-zero session stages 1–4 share. Neither resets on ordinary stage
+  // navigation — only `extra1` resets, explicitly, when the from-zero story
+  // itself restarts (zeroScript firing again below).
+  const [extra0, setExtra0] = React.useState<LogLine[]>([]);
+  const [extra1, setExtra1] = React.useState<LogLine[]>([]);
+  const extra0IdRef = React.useRef(0);
+  const extra1IdRef = React.useRef(0);
+
   React.useEffect(() => {
     const prev = prevRef.current;
     prevRef.current = stage;
@@ -878,6 +896,9 @@ export function Terminal({
     }
     switch (stage) {
       case 1:
+        // A genuine restart of the from-zero story (boot replays) — drop any
+        // heartbeat traffic left over from a previous pass through it.
+        setExtra1([]);
         return run(zeroScript());
       case 2:
         return run(pickScript());
@@ -891,25 +912,23 @@ export function Terminal({
   // alive rather than frozen. Gated on `ui.shown` reaching the scripted
   // count, so nothing fires before the stage has actually played in (or
   // before it's even scrolled into view — `shown` stays 0 until then).
-  // Cleared immediately on leaving the stage (dependency change).
+  // Cleared immediately on leaving the stage (dependency change) — but the
+  // lines already streamed into `extra0` stay put, so browsing away and back
+  // finds the log exactly as it was left.
   React.useEffect(() => {
     if (!animate || stage !== 0 || ui.shown < RUNNING_COUNT) return;
-    let i = 0;
     const id = setInterval(() => {
-      setUi((u) => ({ ...u, extra: [...u.extra, fileChangedLine(lang, i++)].slice(-20) }));
+      const n = extra0IdRef.current++;
+      setExtra0((prev) => [...prev, fileChangedLine(lang, `e0-${n}`, n)].slice(-20));
     }, 2000);
     return () => clearInterval(id);
   }, [stage, ui.shown, animate, lang]);
 
   React.useEffect(() => {
     if (!animate || stage !== 2 || ui.shown < SESSION_COUNT) return;
-    let i = 0;
     const id = setInterval(() => {
-      setUi((u) => ({
-        ...u,
-        extra: [...u.extra, i % 3 === 2 ? commitLine(lang) : fileChangedLine(lang, i)].slice(-20),
-      }));
-      i++;
+      const n = extra1IdRef.current++;
+      setExtra1((prev) => [...prev, n % 3 === 2 ? commitLine(lang, `e1-${n}`) : fileChangedLine(lang, `e1-${n}`, n)].slice(-20));
     }, 2500);
     return () => clearInterval(id);
   }, [stage, ui.shown, animate, lang]);
@@ -917,12 +936,32 @@ export function Terminal({
   const s = strings(lang);
   const running = React.useMemo(() => runningLines(lang), [lang]);
   const session = React.useMemo(() => sessionLines(lang), [lang]);
-  const visibleLines = [...(ui.epoch === 0 ? running : session).slice(0, ui.shown), ...ui.extra];
+  const visibleLines = [
+    ...(ui.epoch === 0 ? running : session).slice(0, ui.shown),
+    ...(ui.epoch === 0 ? extra0 : extra1),
+  ];
 
   const overlayOpen = ui.overlay !== 'none';
-  // While the palette or an overlay owns the bottom zone, its height morph
-  // moves the log via flex — suppress the per-line FLIP so nothing double-applies.
-  const shift = !overlayOpen && !ui.paletteOpen;
+
+  // The bottom zone (palette/overlay) height-morphs over 0.5s whenever it
+  // opens, closes, or swaps to a different panel — during that window its
+  // own height change moves the log pane via flex, so per-line FLIP is
+  // suppressed to avoid double-animating the same reposition. Once it's
+  // settled (the common case — e.g. stage 0's palette sits open for the rest
+  // of the stage while heartbeat lines keep streaming underneath it), FLIP is
+  // back on so newly appended lines still glide the older ones up smoothly
+  // instead of snapping.
+  const [morphing, setMorphing] = React.useState(false);
+  const bottomZoneRef = React.useRef({ overlay: ui.overlay, paletteOpen: ui.paletteOpen });
+  React.useEffect(() => {
+    const prev = bottomZoneRef.current;
+    bottomZoneRef.current = { overlay: ui.overlay, paletteOpen: ui.paletteOpen };
+    if (prev.overlay === ui.overlay && prev.paletteOpen === ui.paletteOpen) return;
+    setMorphing(true);
+    const id = setTimeout(() => setMorphing(false), 520);
+    return () => clearTimeout(id);
+  }, [ui.overlay, ui.paletteOpen]);
+  const shift = !morphing;
 
   return (
     /* Below lg the terminal height tracks the viewport (`100svh − stage chrome`)
@@ -992,13 +1031,14 @@ export function Terminal({
           <Header lang={lang} shop={ui.shop} template={ui.template} conflicts={ui.conflicts} />
           <Rule className="my-px" />
           {/* Log-line FLIP is suppressed (zero-duration layout via `shift`)
-              whenever the palette or an overlay is open: there the bottom
-              zone's height morph owns all vertical movement and the logs ride
-              it via flex. Letting the lines self-animate too would double up
-              and reintroduce the gap. The `layout` prop itself stays on for
-              every line's whole life (see the mount-registration constraint in
-              LogPane); the FLIP runs at the input stage, which the height
-              morph doesn't cover. */}
+              only for the ~0.5s the bottom zone's own height is actively
+              morphing (palette/overlay opening, closing, or swapping) — there
+              its height change moves the log pane via flex, and letting the
+              lines self-animate too would double up and reintroduce the gap.
+              Once settled, FLIP is back on so streamed-in heartbeat lines
+              still glide the block up smoothly. The `layout` prop itself
+              stays on for every line's whole life (see the mount-registration
+              constraint in LogPane). */}
           <LogPane
             lines={visibleLines}
             dim={overlayOpen || ui.paletteOpen}
