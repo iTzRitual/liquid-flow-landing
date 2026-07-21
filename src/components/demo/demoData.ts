@@ -5,7 +5,7 @@ import type { Lang } from '@/i18n/dictionaries';
  * render exactly as in the real application. */
 
 export const demoShops = [
-  { Id: 'demo-1', Name: 'Ogródek', Url: 'https://ogrodek.comarch.pl/sklep' },
+  { Id: 'demo-1', Name: 'Walter', Url: 'https://walter.comarch.pl/sklep' },
   { Id: 'demo-2', Name: 'Topaz Testowy', Url: 'https://topaz.example.com' },
 ];
 
@@ -58,13 +58,13 @@ export const initialLog: Record<Lang, DemoLogEntry[]> = {
   pl: [
     { id: 4, time: '12:03:12', tone: 'warning', message: 'Wykryto 2 konflikty z panelem administracyjnym' },
     { id: 3, time: '12:00:03', tone: 'success', message: 'Pobrano 128 plików szablonu', muted: true },
-    { id: 2, time: '12:00:02', tone: 'info', message: 'Połączono ze sklepem Ogródek', muted: true },
+    { id: 2, time: '12:00:02', tone: 'info', message: 'Połączono ze sklepem Walter', muted: true },
     { id: 1, time: '12:00:01', tone: 'neutral', message: 'Sesja rozpoczęta', muted: true },
   ],
   en: [
     { id: 4, time: '12:03:12', tone: 'warning', message: '2 conflicts detected with the admin panel' },
     { id: 3, time: '12:00:03', tone: 'success', message: 'Downloaded 128 template files', muted: true },
-    { id: 2, time: '12:00:02', tone: 'info', message: 'Connected to shop Ogródek', muted: true },
+    { id: 2, time: '12:00:02', tone: 'info', message: 'Connected to shop Walter', muted: true },
     { id: 1, time: '12:00:01', tone: 'neutral', message: 'Session started', muted: true },
   ],
 };

@@ -205,7 +205,7 @@ function sessionLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
   const s = strings(lang);
   return [
-    { id: 'sess-0', ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green },
+    { id: 'sess-0', ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Walter' : 'Connected to shop: Walter', color: C.green },
     { id: 'sess-1', ts: '12:00:05', text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
     { id: 'sess-2', ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text },
     { id: 'sess-3', ts: '12:04:03', text: pl ? 'Plik został zmieniony — 3/0/common/header.liquid' : 'File changed — 3/0/common/header.liquid', color: C.green },
@@ -327,8 +327,8 @@ function Header({
             </HeaderFade>
             <HeaderFade show={shop} className="col-start-1 row-start-1">
               <span style={{ color: C.dim }}>{pad(s.shopLabel)}</span>
-              <span style={{ color: C.green }}>● Ogródek</span>
-              <span style={{ color: C.dim }}>  https://ogrodek.esklep.pl</span>
+              <span style={{ color: C.green }}>● Walter</span>
+              <span style={{ color: C.dim }}>  https://walter.esklep.pl</span>
             </HeaderFade>
           </div>
           <HeaderFade show={template}>
@@ -465,8 +465,8 @@ function SignInForm({
 }) {
   const s = strings(lang);
   const fields: [string, string][] = [
-    [s.fieldName, 'Ogródek'],
-    [s.fieldUrl, 'https://ogrodek.esklep.pl'],
+    [s.fieldName, 'Walter'],
+    [s.fieldUrl, 'https://walter.esklep.pl'],
     [s.fieldPassword, '••••'],
     [s.fieldSave, s.saveYes],
   ];
@@ -787,9 +787,9 @@ function zeroScript(): [Ui, Step[]] {
     // first /connect: no saved shops — add new or import; brief pause on "add new", then Enter
     [2500, { overlay: 'connect', pickerSel: 0 }],
     [3200, { overlay: 'form', formStep: 0, formTyped: '' }],
-    ...typeSteps(3750, 'Ogródek', TYPE_MS, 'formTyped'),
+    ...typeSteps(3750, 'Walter', TYPE_MS, 'formTyped'),
     [4450, { formStep: 1, formTyped: '' }],
-    ...typeSteps(4550, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
+    ...typeSteps(4550, 'https://walter.esklep.pl', 35, 'formTyped'),
     [5650, { formStep: 2, formTyped: '' }],
     ...typeSteps(5750, '••••', 80, 'formTyped'),
     // Save password?: pause on the default "Yes", then Enter
