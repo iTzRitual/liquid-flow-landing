@@ -817,7 +817,11 @@ function pickScript(): [Ui, Step[]] {
     [450, { pickerSel: 1 }],
     [900, { pickerSel: 2 }],
     [1350, { overlay: 'none', template: true }],
-    ...revealSteps(1800, 1, SESSION_COUNT),
+    // Start the reveal only after the overlay-close morph settles (step 1350 +
+    // the 0.5s height tween = ~1850): a line appended while the flex morph is
+    // still moving the log pane lands with FLIP suppressed and snaps instead of
+    // gliding. 1900 clears the morph so every reveal line rides up cleanly.
+    ...revealSteps(1900, 1, SESSION_COUNT),
   ];
   return [start, steps];
 }
@@ -966,8 +970,23 @@ export function Terminal({
   // both read as stuck/half-animated lines. Firing off the real animation
   // event instead means it can never drift out of sync with what's
   // actually on screen, however fast the stage changes.
+  //
+  // The suppression must fire only for an ACTUAL open/close/swap, so it is
+  // guarded against the last committed overlay/paletteOpen: an effect keyed on
+  // these deps also runs on mount and re-runs on the unrelated re-renders a log
+  // reveal causes, and because the bottom zone mounts under AnimatePresence
+  // `initial={false}` that mount plays no height animation — so nothing would
+  // ever fire onAnimationComplete to switch FLIP back on, and `shift` would sit
+  // stuck off for the whole reveal (every old line snapping up instead of
+  // gliding). Skipping the non-transitions keeps `shift` true through reveals
+  // and only drops it for a real morph, which always has a completion event to
+  // restore it.
   const [shift, setShift] = React.useState(true);
+  const bottomZoneRef = React.useRef({ overlay: ui.overlay, paletteOpen: ui.paletteOpen });
   React.useEffect(() => {
+    const prev = bottomZoneRef.current;
+    bottomZoneRef.current = { overlay: ui.overlay, paletteOpen: ui.paletteOpen };
+    if (prev.overlay === ui.overlay && prev.paletteOpen === ui.paletteOpen) return;
     setShift(false);
   }, [ui.overlay, ui.paletteOpen]);
   const onBottomZoneSettled = () => setShift(true);
