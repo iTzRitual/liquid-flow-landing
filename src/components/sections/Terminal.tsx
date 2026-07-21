@@ -89,7 +89,6 @@ function strings(lang: Lang) {
     saveNo: pl ? 'Nie' : 'No',
     formNext: pl ? 'Enter dalej' : 'Enter next',
     formCancel: pl ? 'Esc anuluj' : 'Esc cancel',
-    formChoiceNav: pl ? '←/→ wybór' : '←/→ select',
     // the template every stage lands on (picked in the /templates picker below)
     selectedTemplate: pl ? 'Własny' : 'Custom',
     // connect picker (first run: no saved shops yet, matches the real /connect)
@@ -472,9 +471,11 @@ function SignInForm({
     [s.fieldSave, s.saveYes],
   ];
   const CHOICE_FIELD = 3;
-  const help = step === CHOICE_FIELD
-    ? [s.formChoiceNav, s.formNext, s.formCancel].join(' · ')
-    : [s.formNext, s.formCancel].join(' · ');
+  // Same hint the whole form through, matching the real app: Save-password
+  // is also the last field, and Enter there submits and closes the form
+  // immediately (see zeroScript) — there's no lingering moment to read a
+  // choice-specific "←/→" hint, so it never appears at all.
+  const help = [s.formNext, s.formCancel].join(' · ');
   return (
     <div className="rounded-md border px-2 py-1" style={{ borderColor: C.magenta }}>
       <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.magenta }}>
@@ -793,8 +794,11 @@ function zeroScript(): [Ui, Step[]] {
     ...typeSteps(6750, '••••', 80, 'formTyped'),
     // Save password?: pause on the default "Yes", then Enter
     [7350, { formStep: 3, formChoice: true }],
-    [8100, { formStep: 4 }],
-    [8450, { overlay: 'templates', shop: true, shown: 1 }],
+    // Save password is the last field — Enter there submits and the form is
+    // gone immediately, same as the real app: no "form complete, all fields
+    // checked" frame lingers in between (that only makes sense between two
+    // fields, where the next one needs to visibly become active).
+    [8100, { formStep: 4, overlay: 'templates', shop: true, shown: 1 }],
   ];
   return [start, steps];
 }
