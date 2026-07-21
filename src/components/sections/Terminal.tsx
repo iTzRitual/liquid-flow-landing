@@ -803,15 +803,16 @@ function zeroScript(): [Ui, Step[]] {
     // instead of staying on the boxed Yes/No it had a moment ago.
     //
     // Two sequential morphs, not one: submitting collapses the form back to the
-    // bare prompt (bottom zone shrinks, so the freshly-printed "Connected to
-    // shop" log rides DOWN with it), then the template picker opens as its own
-    // morph (bottom zone grows, carrying that same log back UP). Swapping
-    // form→templates in a single step morphs the two similar-height panels in
-    // place, so the log pane barely moves and the new line just pops to its
-    // final spot ahead of the picker; routing through the short input row gives
-    // the log-carried-by-the-morph motion of the conflicts→git swap in stage 4.
-    [7100, { overlay: 'none', shop: true, shown: 1 }],
+    // bare prompt (bottom zone shrinks), then the template picker opens as its
+    // own morph (bottom zone grows). Routing through the short input row gives
+    // the tall→short→tall height delta of the conflicts→git swap in stage 4,
+    // instead of morphing the two similar-height panels in place where nothing
+    // visibly moves. The "Connected to shop" log is held back until the picker
+    // has fully opened and settled (7700 + 0.5s morph), so it glides up into a
+    // static pane rather than riding — or racing — the panel's morph.
+    [7100, { overlay: 'none', shop: true }],
     [7700, { overlay: 'templates' }],
+    [8250, { shown: 1 }],
   ];
   return [start, steps];
 }
