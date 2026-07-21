@@ -796,13 +796,22 @@ function zeroScript(): [Ui, Step[]] {
     [6350, { formStep: 3, formChoice: true }],
     // Save password is the last field — Enter submits immediately, so
     // `formStep` never advances to 4 here: the form (with its choice boxes
-    // still showing, exactly as they were) just collapses away as the
-    // templates overlay takes its place. AnimatePresence keeps the exiting
-    // SignInForm mounted for the whole collapse and it re-renders on every
-    // prop change meanwhile — advancing formStep to 4 flashed it to a plain
-    // "Zapisz hasło?: Tak" for that entire ~0.5s exit, instead of staying on
-    // the boxed Yes/No it had a moment ago.
-    [7100, { overlay: 'templates', shop: true, shown: 1 }],
+    // still showing, exactly as they were) just collapses away. AnimatePresence
+    // keeps the exiting SignInForm mounted for the whole collapse and it
+    // re-renders on every prop change meanwhile — advancing formStep to 4
+    // flashed it to a plain "Zapisz hasło?: Tak" for that entire ~0.5s exit,
+    // instead of staying on the boxed Yes/No it had a moment ago.
+    //
+    // Two sequential morphs, not one: submitting collapses the form back to the
+    // bare prompt (bottom zone shrinks, so the freshly-printed "Connected to
+    // shop" log rides DOWN with it), then the template picker opens as its own
+    // morph (bottom zone grows, carrying that same log back UP). Swapping
+    // form→templates in a single step morphs the two similar-height panels in
+    // place, so the log pane barely moves and the new line just pops to its
+    // final spot ahead of the picker; routing through the short input row gives
+    // the log-carried-by-the-morph motion of the conflicts→git swap in stage 4.
+    [7100, { overlay: 'none', shop: true, shown: 1 }],
+    [7700, { overlay: 'templates' }],
   ];
   return [start, steps];
 }
