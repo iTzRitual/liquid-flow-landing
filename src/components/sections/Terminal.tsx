@@ -794,11 +794,15 @@ function zeroScript(): [Ui, Step[]] {
     ...typeSteps(6750, '••••', 80, 'formTyped'),
     // Save password?: pause on the default "Yes", then Enter
     [7350, { formStep: 3, formChoice: true }],
-    // Save password is the last field — Enter there submits and the form is
-    // gone immediately, same as the real app: no "form complete, all fields
-    // checked" frame lingers in between (that only makes sense between two
-    // fields, where the next one needs to visibly become active).
-    [8100, { formStep: 4, overlay: 'templates', shop: true, shown: 1 }],
+    // Save password is the last field — Enter submits immediately, so
+    // `formStep` never advances to 4 here: the form (with its choice boxes
+    // still showing, exactly as they were) just collapses away as the
+    // templates overlay takes its place. AnimatePresence keeps the exiting
+    // SignInForm mounted for the whole collapse and it re-renders on every
+    // prop change meanwhile — advancing formStep to 4 flashed it to a plain
+    // "Zapisz hasło?: Tak" for that entire ~0.5s exit, instead of staying on
+    // the boxed Yes/No it had a moment ago.
+    [8100, { overlay: 'templates', shop: true, shown: 1 }],
   ];
   return [start, steps];
 }
