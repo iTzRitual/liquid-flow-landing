@@ -86,7 +86,12 @@ function strings(lang: Lang) {
     fieldPassword: pl ? 'Hasło webmastera' : 'Webmaster password',
     fieldSave: pl ? 'Zapisz hasło?' : 'Save password?',
     saveYes: pl ? 'Tak' : 'Yes',
-    formHelp: pl ? 'Enter dalej · Esc anuluj' : 'Enter next · Esc cancel',
+    saveNo: pl ? 'Nie' : 'No',
+    formNext: pl ? 'Enter dalej' : 'Enter next',
+    formCancel: pl ? 'Esc anuluj' : 'Esc cancel',
+    formChoiceNav: pl ? '←/→ wybór' : '←/→ select',
+    // the template every stage lands on (picked in the /templates picker below)
+    selectedTemplate: pl ? 'Własny' : 'Custom',
     // connect picker (first run: no saved shops yet, matches the real /connect)
     connectTitle: pl ? 'Połącz ze sklepem' : 'Connect to shop',
     connectAdd: pl ? 'Dodaj nowe połączenie' : 'Add new connection',
@@ -130,40 +135,80 @@ function strings(lang: Lang) {
   };
 }
 
-type LogLine = { ts: string; text: string; color: string };
+type LogLine = { ts: string; text: string; color: string; kind?: 'separator' };
 
-/* Epoch 0 — the already-running session behind stage 0 (hot-reload traffic
- * streaming in while the palette tour plays). */
+function liveTs(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+}
+
+/* File paths cycled through by the periodic "simulated activity" log lines
+ * (see the two intervals in Terminal below) — template id 3 ("Własny"/Custom,
+ * the one every stage lands on), mode 0, matching the real app's
+ * `${templateId}/${mode}/${name}` label format. */
+const FAKE_FILES = [
+  'common/footer.html',
+  'common/header.liquid',
+  'css/theme.css',
+  'templates/index.liquid',
+  'snippets/product-card.liquid',
+  'js/cart.js',
+  'templates/product.liquid',
+  'common/navigation.liquid',
+];
+
+function fileChangedLine(lang: Lang, idx: number): LogLine {
+  const pl = lang === 'pl';
+  const label = `3/0/${FAKE_FILES[idx % FAKE_FILES.length]}`;
+  return { ts: liveTs(), text: pl ? `Plik został zmieniony — ${label}` : `File changed — ${label}`, color: C.green };
+}
+
+function commitLine(lang: Lang): LogLine {
+  const pl = lang === 'pl';
+  const hash = Math.random().toString(16).slice(2, 9);
+  return { ts: liveTs(), text: pl ? `📝 Git: zapisano wersję ${hash}` : `📝 Git: saved version ${hash}`, color: C.dim };
+}
+
+/* Epoch 0 — reopening the app on an existing session (stage 0): a session
+ * separator + the four connect-flow log lines the real CLI prints, verbatim
+ * from translations.js (NewSession/TemplateSelected/LocalFolderReady/
+ * MismatchesChecked/SyncActiveHotReload, all logOk → green). Dated "now" —
+ * matches how a just-reopened session actually reads. */
 function runningLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
+  const s = strings(lang);
+  const now = new Date();
+  const when = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}, ${liveTs()}`;
+  const sepText = `── ${pl ? 'Nowa sesja' : 'New session'} • ${when} ` + '─'.repeat(200);
+  const ts = liveTs();
   return [
-    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text },
-    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim },
-    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green },
-    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text },
-    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green },
+    { ts: '', text: sepText, color: C.divider, kind: 'separator' },
+    { ts, text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
+    { ts, text: pl ? 'Folder lokalny gotowy — pliki już pobrane' : 'Local folder ready — files already downloaded', color: C.green },
+    { ts, text: pl ? 'Sprawdzono niezgodności — konflikty: 0' : 'Mismatches checked — conflicts: 0', color: C.green },
+    { ts, text: pl ? `Synchronizacja aktywna — hot-reload (${s.selectedTemplate})` : `Synchronization active — hot-reload (${s.selectedTemplate})`, color: C.green },
   ];
 }
 
 /* Epoch 1 — the from-zero session that stages 1–4 build up: connect (stage 1),
- * then template + hot-reload traffic (stage 2). */
+ * then template + real sync traffic (stage 2) — a file change is one log line
+ * (LogFileChanged), and the auto-commit logs as GitVersionSaved, both taken
+ * verbatim from translations.js. */
 function sessionLines(lang: Lang): LogLine[] {
   const pl = lang === 'pl';
+  const s = strings(lang);
   return [
     { ts: '12:00:02', text: pl ? 'Połączono ze sklepem: Ogródek' : 'Connected to shop: Ogródek', color: C.green },
-    { ts: '12:00:05', text: pl ? 'Wybrano szablon: Topaz [42]' : 'Template selected: Topaz [42]', color: C.green },
+    { ts: '12:00:05', text: pl ? `Wybrano szablon: ${s.selectedTemplate} [3]` : `Template selected: ${s.selectedTemplate} [3]`, color: C.green },
     { ts: '12:00:06', text: pl ? 'Pobrano 128 plików ze sklepu' : 'Downloaded 128 files from shop', color: C.text },
-    { ts: '12:04:03', text: pl ? 'Zapisano — components/header.liquid' : 'Saved — components/header.liquid', color: C.text },
-    { ts: '12:04:03', text: pl ? 'Wysyłanie (Liquid_FileSet)…' : 'Uploading (Liquid_FileSet)…', color: C.dim },
-    { ts: '12:04:04', text: pl ? 'Hot-reload — widoczne w sklepie (214 ms)' : 'Hot-reload — live in the shop (214 ms)', color: C.green },
-    { ts: '12:04:09', text: pl ? 'Zapisano — css/layout.css' : 'Saved — css/layout.css', color: C.text },
-    { ts: '12:04:09', text: pl ? 'Hot-reload — widoczne w sklepie (189 ms)' : 'Hot-reload — live in the shop (189 ms)', color: C.green },
-    { ts: '12:04:10', text: 'Auto-commit → liquidflow/wip', color: C.dim },
+    { ts: '12:04:03', text: pl ? 'Plik został zmieniony — 3/0/common/header.liquid' : 'File changed — 3/0/common/header.liquid', color: C.green },
+    { ts: '12:04:09', text: pl ? 'Plik został zmieniony — 3/0/css/layout.css' : 'File changed — 3/0/css/layout.css', color: C.green },
+    { ts: '12:04:10', text: pl ? '📝 Git: zapisano wersję a3f21c9' : '📝 Git: saved version a3f21c9', color: C.dim },
   ];
 }
 
 const RUNNING_COUNT = 5;
-const SESSION_COUNT = 9;
+const SESSION_COUNT = 6;
 
 /* — building blocks — */
 
@@ -281,8 +326,8 @@ function Header({
           </div>
           <HeaderFade show={template}>
             <span style={{ color: C.dim }}>{pad(s.templateLabel)}</span>
-            <span style={{ color: C.cyan }}>Topaz</span>
-            <span style={{ color: C.dim }}> [42]</span>
+            <span style={{ color: C.cyan }}>{s.selectedTemplate}</span>
+            <span style={{ color: C.dim }}> [3]</span>
           </HeaderFade>
           <HeaderFade show={template}>
             <span style={{ color: C.dim }}>{pad(s.gitLabel)}</span>
@@ -346,10 +391,10 @@ function LogPane({
           initial={i >= animateFrom ? { opacity: 0, y: '100%' } : false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: EASE_OUT, layout: shift ? undefined : { duration: 0 } }}
-          className="overflow-hidden text-ellipsis whitespace-pre"
+          className={l.kind === 'separator' ? 'overflow-hidden whitespace-pre' : 'overflow-hidden text-ellipsis whitespace-pre'}
           style={{ color: l.color }}
         >
-          {l.ts} {l.text}
+          {l.kind === 'separator' ? l.text : `${l.ts} ${l.text}`}
         </motion.div>
       ))}
       </div>
@@ -395,9 +440,22 @@ function OverlayFrame({ title, children }: { title: string; children: React.Reac
 }
 
 /* Sign-in form (Form.jsx: magenta round border). `step` is the index of the
- * active field (4 = complete); `typed` is what has been "typed" into it so far.
- * The stage-1 script advances these to auto-fill the form field by field. */
-function SignInForm({ lang, step, typed }: { lang: Lang; step: number; typed: string }) {
+ * active field (4 = complete); `typed` is what has been "typed" into it so far
+ * for the two text fields; `choice` is the current Yes/No selection on the
+ * Save-password field (a real `type:'choice'` field in the app — ←/→ moves
+ * between two boxed options, it does not accept typed text). The stage-1
+ * script advances these to auto-fill the form field by field. */
+function SignInForm({
+  lang,
+  step,
+  typed,
+  choice,
+}: {
+  lang: Lang;
+  step: number;
+  typed: string;
+  choice: boolean;
+}) {
   const s = strings(lang);
   const fields: [string, string][] = [
     [s.fieldName, 'Ogródek'],
@@ -405,6 +463,10 @@ function SignInForm({ lang, step, typed }: { lang: Lang; step: number; typed: st
     [s.fieldPassword, '••••'],
     [s.fieldSave, s.saveYes],
   ];
+  const CHOICE_FIELD = 3;
+  const help = step === CHOICE_FIELD
+    ? [s.formChoiceNav, s.formNext, s.formCancel].join(' · ')
+    : [s.formNext, s.formCancel].join(' · ');
   return (
     <div className="rounded-md border px-2 py-1" style={{ borderColor: C.magenta }}>
       <div className="overflow-hidden text-ellipsis whitespace-pre font-bold" style={{ color: C.magenta }}>
@@ -413,19 +475,35 @@ function SignInForm({ lang, step, typed }: { lang: Lang; step: number; typed: st
       {fields.map(([label, value], i) => {
         const done = i < step;
         const activeRow = i === step;
+        const isChoiceField = i === CHOICE_FIELD;
         return (
           <div key={label} className="overflow-hidden text-ellipsis whitespace-pre">
             <span style={{ color: activeRow ? C.text : C.dim }}>
               {done ? '✓ ' : activeRow ? '› ' : '  '}
               {label}:{' '}
             </span>
-            <span style={{ color: C.dim }}>{done ? value : activeRow ? typed : '…'}</span>
-            {activeRow && <Cursor />}
+            {activeRow && isChoiceField ? (
+              <>
+                <span style={choice ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.dim }}>
+                  {' '}
+                  {s.saveYes}
+                  {' '}
+                </span>
+                <span style={!choice ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.dim }}>
+                  {' '}
+                  {s.saveNo}
+                  {' '}
+                </span>
+              </>
+            ) : (
+              <span style={{ color: C.dim }}>{done ? value : activeRow ? typed : '…'}</span>
+            )}
+            {activeRow && !isChoiceField && <Cursor />}
           </div>
         );
       })}
       <div className="overflow-hidden text-ellipsis whitespace-pre" style={{ color: C.dim }}>
-        {s.formHelp}
+        {help}
       </div>
     </div>
   );
@@ -456,25 +534,31 @@ function ConnectPicker({ lang, sel }: { lang: Lang; sel: number }) {
   );
 }
 
-/* Template picker (Picker.jsx: cyan round border). */
-const TEMPLATES: [string, boolean][] = [
-  ['Topaz [42]', false],
-  ['Szafir [39]', false],
-  ['Opal [23]', false],
-  ['Bursztyn [17]', true],
-];
+/* Template picker (Picker.jsx: cyan round border). The shop's four templates
+ * — id 3 ("Własny"/Custom) is the one every stage lands on. */
+function templatesFor(lang: Lang): { label: string; locked: boolean }[] {
+  const pl = lang === 'pl';
+  const items: [string, string, number][] = [
+    ['Szafir', '2023.5.2', 1],
+    ['Rubin', '2026.2.1', 2],
+    [pl ? 'Własny' : 'Custom', pl ? 'aktualny 2026' : 'current 2026', 3],
+    ['Topaz', '2026.1.1', 4],
+  ];
+  return items.map(([name, version, id]) => ({ label: `${name} (${version}) [${id}]`, locked: false }));
+}
 
 function TemplatePicker({ lang, sel }: { lang: Lang; sel: number }) {
   const s = strings(lang);
+  const templates = templatesFor(lang);
   return (
     <OverlayFrame title={s.selectTemplate}>
-      {TEMPLATES.map(([name, locked], i) => {
+      {templates.map(({ label, locked }, i) => {
         const isSel = i === sel;
         return (
-          <div key={name} className="overflow-hidden text-ellipsis whitespace-pre">
+          <div key={label} className="overflow-hidden text-ellipsis whitespace-pre">
             <span style={isSel ? { backgroundColor: C.cyan, color: '#0b0f14' } : { color: C.text }}>
               {isSel ? '› ' : '  '}
-              {name}
+              {label}
             </span>
             {locked && <span style={{ color: isSel ? '#0b0f14' : C.dim }}>{'  '}{s.lockedHint}</span>}
           </div>
@@ -599,6 +683,7 @@ type Ui = {
   overlay: Overlay;
   formStep: number; // active sign-in field (4 = complete)
   formTyped: string; // chars "typed" into the active field
+  formChoice: boolean; // Save-password choice field: true = Yes selected
   pickerSel: number; // selected template row
   shop: boolean; // header: Shop row
   template: boolean; // header: Template + Git rows
@@ -606,6 +691,7 @@ type Ui = {
   epoch: 0 | 1; // which log set (running session vs from-zero session)
   shown: number; // log lines currently printed
   revealFrom: number; // first line index that animates in (earlier ones mount static)
+  extra: LogLine[]; // simulated activity appended every few seconds (stages 0 and 2)
 };
 
 /** The resting end-state of each stage — what backwards scrolling and fast
@@ -620,6 +706,7 @@ function settled(stage: number): Ui {
     overlay: 'none',
     formStep: 4,
     formTyped: '',
+    formChoice: true,
     pickerSel: 0,
     shop: true,
     template: true,
@@ -627,14 +714,15 @@ function settled(stage: number): Ui {
     epoch: 1,
     shown: SESSION_COUNT,
     revealFrom: SESSION_COUNT,
+    extra: [],
   };
   switch (stage) {
     case 0:
       // Connected app in full swing: palette open over the streamed log.
       return { ...base, typed: '/', paletteOpen: true, epoch: 0, shown: RUNNING_COUNT, revealFrom: RUNNING_COUNT };
     case 1:
-      // First-launch session, signed in, template picker open.
-      return { ...base, overlay: 'templates', template: false, shown: 1, revealFrom: 1 };
+      // First-launch session, signed in, template picker open on template 3 (Własny/Custom).
+      return { ...base, overlay: 'templates', template: false, shown: 1, revealFrom: 1, pickerSel: 2 };
     case 2:
       return base;
     case 3:
@@ -676,7 +764,7 @@ function introScript(): [Ui, Step[]] {
  * "import shops" (the highlight sweeps over import), then "add new" opens the
  * sign-in pane which auto-fills field by field, and the template picker takes
  * its place. */
-function zeroScript(lang: Lang): [Ui, Step[]] {
+function zeroScript(): [Ui, Step[]] {
   // The palette stays open — the whole app screen (palette included) rides out
   // in the screen crossfade while the shell rides in; the exiting frame is a
   // frozen snapshot, so the reset below is invisible until the app re-enters.
@@ -699,8 +787,9 @@ function zeroScript(lang: Lang): [Ui, Step[]] {
     ...typeSteps(5550, 'https://ogrodek.esklep.pl', 35, 'formTyped'),
     [6650, { formStep: 2, formTyped: '' }],
     ...typeSteps(6750, '••••', 80, 'formTyped'),
-    [7350, { formStep: 3, formTyped: '' }],
-    [7700, { formTyped: strings(lang).saveYes }],
+    [7350, { formStep: 3, formChoice: true }],
+    [7650, { formChoice: false }],
+    [7900, { formChoice: true }],
     [8100, { formStep: 4 }],
     [8450, { overlay: 'templates', shop: true, shown: 1 }],
   ];
@@ -713,7 +802,7 @@ function pickScript(): [Ui, Step[]] {
   const start = { ...settled(1), stage: 2 };
   const steps: Step[] = [
     [450, { pickerSel: 1 }],
-    [900, { pickerSel: 0 }],
+    [900, { pickerSel: 2 }],
     [1350, { overlay: 'none', template: true }],
     ...revealSteps(1800, 1, SESSION_COUNT),
   ];
@@ -789,7 +878,7 @@ export function Terminal({
     }
     switch (stage) {
       case 1:
-        return run(zeroScript(lang));
+        return run(zeroScript());
       case 2:
         return run(pickScript());
       default:
@@ -797,10 +886,38 @@ export function Terminal({
     }
   }, [stage, active, animate, lang]);
 
+  // Simulated activity heartbeats: once a stage's log has fully printed in,
+  // keep appending traffic every couple seconds so the session reads as
+  // alive rather than frozen. Gated on `ui.shown` reaching the scripted
+  // count, so nothing fires before the stage has actually played in (or
+  // before it's even scrolled into view — `shown` stays 0 until then).
+  // Cleared immediately on leaving the stage (dependency change).
+  React.useEffect(() => {
+    if (!animate || stage !== 0 || ui.shown < RUNNING_COUNT) return;
+    let i = 0;
+    const id = setInterval(() => {
+      setUi((u) => ({ ...u, extra: [...u.extra, fileChangedLine(lang, i++)].slice(-20) }));
+    }, 2000);
+    return () => clearInterval(id);
+  }, [stage, ui.shown, animate, lang]);
+
+  React.useEffect(() => {
+    if (!animate || stage !== 2 || ui.shown < SESSION_COUNT) return;
+    let i = 0;
+    const id = setInterval(() => {
+      setUi((u) => ({
+        ...u,
+        extra: [...u.extra, i % 3 === 2 ? commitLine(lang) : fileChangedLine(lang, i)].slice(-20),
+      }));
+      i++;
+    }, 2500);
+    return () => clearInterval(id);
+  }, [stage, ui.shown, animate, lang]);
+
   const s = strings(lang);
   const running = React.useMemo(() => runningLines(lang), [lang]);
   const session = React.useMemo(() => sessionLines(lang), [lang]);
-  const visibleLines = (ui.epoch === 0 ? running : session).slice(0, ui.shown);
+  const visibleLines = [...(ui.epoch === 0 ? running : session).slice(0, ui.shown), ...ui.extra];
 
   const overlayOpen = ui.overlay !== 'none';
   // While the palette or an overlay owns the bottom zone, its height morph
@@ -924,7 +1041,7 @@ export function Terminal({
                 className="shrink-0 overflow-hidden"
               >
                 <div className="pt-px">
-                  <SignInForm lang={lang} step={ui.formStep} typed={ui.formTyped} />
+                  <SignInForm lang={lang} step={ui.formStep} typed={ui.formTyped} choice={ui.formChoice} />
                 </div>
               </motion.div>
             )}
