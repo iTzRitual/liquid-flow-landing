@@ -120,3 +120,8 @@ what actually ships; if in doubt, check `../liquid-sync-mac/README.md`.
 - Match the existing near-black Linear aesthetic and the vendored design tokens.
 - Keep PL and EN dictionary entries in sync when adding copy.
 - Prefer verifying against `../liquid-sync-mac` over inventing product details.
+
+## Git workflow
+
+- **Do not open pull requests.** Work directly on the current branch unless explicitly told
+  otherwise.
