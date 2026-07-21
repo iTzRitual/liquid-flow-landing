@@ -16,10 +16,41 @@ export const demoFileTree = [
       { name: 'mobile', children: [{ name: 'mobile1.min.css' }, { name: 'main.js' }] },
       { name: 'header.liquid' },
       { name: 'footer.liquid' },
+      { name: 'breadcrumbs.liquid' },
+      { name: 'newsletter.liquid' },
     ],
   },
-  { name: 'css', children: [{ name: 'layout.css' }, { name: 'theme.css' }] },
-  { name: 'snippets', children: [{ name: 'product-card.liquid' }] },
+  {
+    name: 'partials',
+    children: [
+      {
+        name: 'common',
+        children: [{ name: 'complaint-popup.html' }, { name: 'login-register-popup.html' }],
+      },
+      { name: 'customer', children: [{ name: 'order-content.html' }] },
+    ],
+  },
+  {
+    name: 'static-elements',
+    children: [
+      { name: 'refunds', children: [{ name: 'refunds.html' }] },
+      { name: 'customer-profile', children: [{ name: 'customer-profile.html' }] },
+    ],
+  },
+  {
+    name: 'css',
+    children: [
+      { name: 'layout1.css' },
+      { name: 'layout-m0.css' },
+      { name: 'layout.css' },
+      { name: 'theme.css' },
+    ],
+  },
+  { name: 'js', children: [{ name: 'layout1.min.js' }, { name: 'layout1.js' }] },
+  { name: 'snippets', children: [{ name: 'product-card.liquid' }, { name: 'product-list.liquid' }] },
+  { name: '_layout.html' },
+  { name: 'regulations.html' },
+  { name: 'contact.html' },
   { name: 'settings.liquid' },
   { name: 'index.html' },
 ];

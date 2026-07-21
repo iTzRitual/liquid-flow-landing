@@ -21,10 +21,12 @@ import {
   type DemoTone,
 } from './demoData';
 
-/* The app window renders at its native desktop size and is scaled down to fit
- * the container — layout inside stays pixel-identical with the real app. */
-const BASE_WIDTH = 1080;
-const BASE_HEIGHT = 780;
+/* The app window renders at a larger internal canvas and is scaled down to fit
+ * the container — so the UI reads denser (~0.75× zoom vs. the 1080 native): the
+ * shop rail takes a smaller share of the width, leaving more room for the file
+ * tree and the activity log. Layout inside stays pixel-identical with the app. */
+const BASE_WIDTH = 1440;
+const BASE_HEIGHT = 1040;
 
 const MAX_LOG = 100;
 const SCRIPT_INTERVAL_MS = 2600;
@@ -115,12 +117,15 @@ export function AppDemo({ className }: { className?: string }) {
 
   const currentShop = demoShops.find((s) => s.Id === currentShopId) ?? demoShops[0];
 
-  // Scale-to-fit: render at desktop size, shrink with the container.
+  // Scale-to-fit: render at the internal canvas size, shrink with the container.
+  // Measured synchronously on mount so the first paint is already scaled — no
+  // one-frame flash of the 1440px canvas overflowing the ~1200px container.
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(1);
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    setScale(Math.min(1, el.getBoundingClientRect().width / BASE_WIDTH));
     const observer = new ResizeObserver(([entry]) => {
       setScale(Math.min(1, entry.contentRect.width / BASE_WIDTH));
     });
